@@ -68,10 +68,23 @@ var mcp = builder
     .WithMcpServer();
 #pragma warning restore ASPIREMCP001
 
+// DevDesk.Agent hosts the AIAgent (Microsoft Agent Framework), discovers LookupTicket and
+// SearchRunbooks from DevDesk.Mcp as an MCP client, and streams to the frontend via AG-UI.
+var agent = builder
+    .AddProject<Projects.DevDesk_Agent>(ResourceNames.Agent)
+    .WithReference(chatModel)
+    .WaitFor(chatModel)
+    .WithReference(mcp)
+    .WaitFor(mcp)
+    .WithHttpHealthCheck(Topology.HealthCheckPath)
+    .WithExternalHttpEndpoints();
+
 var webfrontend = builder
     .AddViteApp(ResourceNames.WebFrontend, "../frontend")
     .WithReference(server)
-    .WaitFor(server);
+    .WaitFor(server)
+    .WithReference(agent)
+    .WaitFor(agent);
 
 server.PublishWithContainerFiles(webfrontend, "wwwroot");
 

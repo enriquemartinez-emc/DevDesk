@@ -14,5 +14,6 @@ public static class ResourceNames
 
     public const string Server = "server";
     public const string Mcp = "mcp";
+    public const string Agent = "agent";
     public const string WebFrontend = "webfrontend";
 }

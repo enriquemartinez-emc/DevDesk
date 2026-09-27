@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDesk.Mcp", "DevDesk.Mcp\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDesk.Server.Core.Tests", "DevDesk.Server.Core.Tests\DevDesk.Server.Core.Tests.csproj", "{BA56F2BB-0B63-458D-BB51-743EF1D36824}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDesk.Agent", "DevDesk.Agent\DevDesk.Agent.csproj", "{96117004-7902-4167-88F8-F42A116C05EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,6 +109,18 @@ Global
 		{BA56F2BB-0B63-458D-BB51-743EF1D36824}.Release|x64.Build.0 = Release|Any CPU
 		{BA56F2BB-0B63-458D-BB51-743EF1D36824}.Release|x86.ActiveCfg = Release|Any CPU
 		{BA56F2BB-0B63-458D-BB51-743EF1D36824}.Release|x86.Build.0 = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|x64.Build.0 = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Debug|x86.Build.0 = Debug|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|x64.ActiveCfg = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|x64.Build.0 = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|x86.ActiveCfg = Release|Any CPU
+		{96117004-7902-4167-88F8-F42A116C05EE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
