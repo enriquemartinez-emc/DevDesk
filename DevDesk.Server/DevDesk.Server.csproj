@@ -7,10 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" Version="13.5.4" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DevDesk.ServiceDefaults\DevDesk.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\DevDesk.Server.Core\DevDesk.Server.Core.csproj" />
   </ItemGroup>
 </Project>
