@@ -58,7 +58,7 @@ DevDesk/
 │   └── Features/
 │       └── Tickets/
 │           └── Core.cs           # Ticket, TicketStatus, TicketRules
-├── DevDesk.Core.Tests/           # unit tests against DevDesk.Core, zero mocks, zero DB
+├── DevDesk.Server.Core.Tests/    # unit tests against DevDesk.Server.Core, zero mocks, zero DB
 ├── DevDesk.Server/           # Minimal API — ticket CRUD + /chat proxy
 │   └── Features/
 │       └── Tickets/

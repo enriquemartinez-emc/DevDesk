@@ -1,6 +1,6 @@
 using DevDesk.Server.Core.Features.Tickets;
 
-namespace DevDesk.Core.Tests.Features.Tickets;
+namespace DevDesk.Server.Core.Tests.Features.Tickets;
 
 public class TicketRulesTests
 {
