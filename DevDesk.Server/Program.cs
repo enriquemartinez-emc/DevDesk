@@ -26,7 +26,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-await TicketsSchema.EnsureCreatedAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), CancellationToken.None);
+await TicketsSchema.EnsureCreatedAsync(
+    app.Services.GetRequiredService<NpgsqlDataSource>(),
+    CancellationToken.None
+);
 
 app.MapTicketsEndpoints();
 

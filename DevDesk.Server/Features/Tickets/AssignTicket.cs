@@ -29,28 +29,39 @@ public static class AssignTicketEndpoint
         AssignTicketRequest request,
         NpgsqlDataSource dataSource,
         TimeProvider time,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
         const string selectSql = """
-            select id as Id, subject as Subject, description as Description,
-                   requester_id as RequesterId, created_at as CreatedAt, status as Status,
-                   assigned_agent as AssignedAgent, assigned_at as AssignedAt,
-                   resolution_note as ResolutionNote, resolved_at as ResolvedAt, closed_at as ClosedAt
+            select 
+                id as Id, 
+                subject as Subject, 
+                description as Description,
+                requester_id as RequesterId, 
+                created_at as CreatedAt, 
+                status as Status,
+                assigned_agent as AssignedAgent, 
+                assigned_at as AssignedAt,
+                resolution_note as ResolutionNote, 
+                resolved_at as ResolvedAt, 
+                closed_at as ClosedAt
             from tickets
             where id = @Id
             """;
 
         var row = await connection.QuerySingleOrDefaultAsync<DbTicketRow>(
-            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct));
+            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct)
+        );
 
         if (row is null)
         {
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Ticket not found.",
-                detail: $"Ticket '{id}' does not exist.");
+                detail: $"Ticket '{id}' does not exist."
+            );
         }
 
         if (row.ToDomain() is not OpenTicket open)
@@ -58,27 +69,34 @@ public static class AssignTicketEndpoint
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ticket cannot be assigned.",
-                detail: "Only open tickets can be assigned.");
+                detail: "Only open tickets can be assigned."
+            );
         }
 
         var assigned = TicketRules.Assign(open, new AgentId(request.AgentId), time.GetUtcNow());
 
         const string updateSql = """
             update tickets
-            set status = @Status, assigned_agent = @AssignedAgent, assigned_at = @AssignedAt
+            set 
+                status = @Status, 
+                assigned_agent = @AssignedAgent, 
+                assigned_at = @AssignedAt
             where id = @Id
             """;
 
-        await connection.ExecuteAsync(new CommandDefinition(
-            updateSql,
-            new
-            {
-                Id = assigned.Id.Value,
-                Status = "in_progress",
-                AssignedAgent = assigned.AssignedAgent.Value,
-                assigned.AssignedAt,
-            },
-            cancellationToken: ct));
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                updateSql,
+                new
+                {
+                    Id = assigned.Id.Value,
+                    Status = "in_progress",
+                    AssignedAgent = assigned.AssignedAgent.Value,
+                    assigned.AssignedAt,
+                },
+                cancellationToken: ct
+            )
+        );
 
         return TypedResults.Ok(TicketResponses.FromDomain(assigned));
     }
@@ -100,18 +118,48 @@ file sealed record DbTicketRow
     public DateTime? ResolvedAt { get; init; }
     public DateTime? ClosedAt { get; init; }
 
-    public Ticket ToDomain() => Status switch
-    {
-        "open" => new OpenTicket(new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt)),
-        "in_progress" => new InProgressTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value)),
-        "resolved" => new ResolvedTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value), ResolutionNote!, new DateTimeOffset(ResolvedAt!.Value)),
-        "closed" => new ClosedTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value), ResolutionNote!, new DateTimeOffset(ResolvedAt!.Value), new DateTimeOffset(ClosedAt!.Value)),
-        _ => throw new InvalidOperationException($"Unsupported ticket status '{Status}'."),
-    };
+    public Ticket ToDomain() =>
+        Status switch
+        {
+            "open" => new OpenTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt)
+            ),
+            "in_progress" => new InProgressTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value)
+            ),
+            "resolved" => new ResolvedTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value),
+                ResolutionNote!,
+                new DateTimeOffset(ResolvedAt!.Value)
+            ),
+            "closed" => new ClosedTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value),
+                ResolutionNote!,
+                new DateTimeOffset(ResolvedAt!.Value),
+                new DateTimeOffset(ClosedAt!.Value)
+            ),
+            _ => throw new InvalidOperationException($"Unsupported ticket status '{Status}'."),
+        };
 }
