@@ -3,10 +3,13 @@ using DevDesk.AppHost.Core;
 var builder = DistributedApplication.CreateBuilder(args);
 
 // Postgres 18 + pgvector — structured (tickets) and vector (doc_chunks) data in one instance.
+// WithDataVolume() picks the container's data directory from the image tag at the time it's
+// called (Postgres 18 changed layout - see https://github.com/docker-library/postgres/issues/1259).
+// Our pgvector tag doesn't parse as "18+", so call it before swapping the image via WithImage().
 var postgres = builder.AddPostgres(ResourceNames.Postgres)
-    .WithImage(ContainerImages.PgVector, ContainerImages.PgVectorTag)
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithImage(ContainerImages.PgVector, ContainerImages.PgVectorTag);
 
 var database = postgres.AddDatabase(ResourceNames.Database);
 
