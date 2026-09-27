@@ -1,4 +1,4 @@
-using DevDesk.AppHost.Core;
+using DevDesk.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -6,7 +6,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 // WithDataVolume() picks the container's data directory from the image tag at the time it's
 // called (Postgres 18 changed layout - see https://github.com/docker-library/postgres/issues/1259).
 // Our pgvector tag doesn't parse as "18+", so call it before swapping the image via WithImage().
-var postgres = builder.AddPostgres(ResourceNames.Postgres)
+var postgres = builder
+    .AddPostgres(ResourceNames.Postgres)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume()
     .WithImage(ContainerImages.PgVector, ContainerImages.PgVectorTag);
@@ -14,15 +15,15 @@ var postgres = builder.AddPostgres(ResourceNames.Postgres)
 var database = postgres.AddDatabase(ResourceNames.Database);
 
 // Azure Storage emulator (Azurite) — raw runbooks before ingestion.
-var storage = builder.AddAzureStorage(ResourceNames.Storage)
-    .RunAsEmulator(azurite => azurite
-        .WithLifetime(ContainerLifetime.Persistent)
-        .WithDataVolume());
+var storage = builder
+    .AddAzureStorage(ResourceNames.Storage)
+    .RunAsEmulator(azurite => azurite.WithLifetime(ContainerLifetime.Persistent).WithDataVolume());
 
 var runbooks = storage.AddBlobs(ResourceNames.RunbooksBlobs);
 
 // Ollama (community toolkit) — local chat + embedding models.
-var ollama = builder.AddOllama(ResourceNames.Ollama)
+var ollama = builder
+    .AddOllama(ResourceNames.Ollama)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume();
 
@@ -30,19 +31,45 @@ var chatModel = ollama.AddModel(ModelNames.Chat);
 var embeddingModel = ollama.AddModel(ModelNames.Embedding);
 
 // grafana-lgtm — Collector + Prometheus (metrics) + Loki (logs) + Tempo (traces) + Grafana, one image.
-var observability = builder.AddContainer(ResourceNames.Observability, ContainerImages.GrafanaLgtm, ContainerImages.GrafanaLgtmTag)
+var observability = builder
+    .AddContainer(
+        ResourceNames.Observability,
+        ContainerImages.GrafanaLgtm,
+        ContainerImages.GrafanaLgtmTag
+    )
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithEndpoint(port: Topology.GrafanaPort, targetPort: Topology.GrafanaPort, name: Topology.GrafanaEndpointName)
+    .WithEndpoint(
+        port: Topology.GrafanaPort,
+        targetPort: Topology.GrafanaPort,
+        name: Topology.GrafanaEndpointName
+    )
     .WithEndpoint(targetPort: Topology.OtlpGrpcPort, name: Topology.OtlpGrpcEndpointName)
     .WithEndpoint(targetPort: Topology.OtlpHttpPort, name: Topology.OtlpHttpEndpointName);
 
-var server = builder.AddProject<Projects.DevDesk_Server>(ResourceNames.Server)
+var server = builder
+    .AddProject<Projects.DevDesk_Server>(ResourceNames.Server)
     .WithReference(database)
     .WaitFor(database)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
-var webfrontend = builder.AddViteApp(ResourceNames.WebFrontend, "../frontend")
+// DevDesk.Mcp groups LookupTicket (calls the server's ticket API) and SearchRunbooks
+// (pgvector similarity search embedded via the Ollama embedding model) as MCP tools.
+#pragma warning disable ASPIREMCP001
+var mcp = builder
+    .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
+    .WithReference(database)
+    .WaitFor(database)
+    .WithReference(embeddingModel)
+    .WaitFor(embeddingModel)
+    .WithReference(server)
+    .WaitFor(server)
+    .WithHttpHealthCheck(Topology.HealthCheckPath)
+    .WithMcpServer();
+#pragma warning restore ASPIREMCP001
+
+var webfrontend = builder
+    .AddViteApp(ResourceNames.WebFrontend, "../frontend")
     .WithReference(server)
     .WaitFor(server);
 

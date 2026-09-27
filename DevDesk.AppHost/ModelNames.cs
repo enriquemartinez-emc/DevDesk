@@ -1,4 +1,4 @@
-namespace DevDesk.AppHost.Core;
+namespace DevDesk.AppHost;
 
 public static class ModelNames
 {

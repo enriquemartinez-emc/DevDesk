@@ -1,4 +1,4 @@
-namespace DevDesk.AppHost.Core;
+namespace DevDesk.AppHost;
 
 public static class ResourceNames
 {
@@ -13,5 +13,6 @@ public static class ResourceNames
     public const string Observability = "grafana-lgtm";
 
     public const string Server = "server";
+    public const string Mcp = "mcp";
     public const string WebFrontend = "webfrontend";
 }

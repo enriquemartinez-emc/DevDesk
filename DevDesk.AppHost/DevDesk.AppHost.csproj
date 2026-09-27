@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DevDesk.Server\DevDesk.Server.csproj" />
+    <ProjectReference Include="..\DevDesk.Mcp\DevDesk.Mcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
