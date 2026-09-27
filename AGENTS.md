@@ -52,8 +52,8 @@ Every one of these is a native Aspire resource, added in `DevDesk.AppHost/Progra
 
 ```
 DevDesk/
-├── DevDesk.AppHost/              # orchestrator — Program.cs only, no logic
-├── DevDesk.AppHost.Core/         # ResourceNames, ContainerImages, ModelNames, Topology constants
+├── DevDesk.AppHost/              # orchestrator — AppHost.cs plus ResourceNames.cs, ContainerImages.cs,
+│                                  # ModelNames.cs, Topology.cs constants, no other logic
 ├── DevDesk.Server.Core/                 # domain logic — zero I/O references, ever
 │   └── Features/
 │       └── Tickets/
@@ -88,10 +88,15 @@ New backend features follow the same `Core.cs` (pure) + `Data.cs` (I/O) split as
 
 ## Non-negotiable rules
 
-1. **No magic strings or numbers in `DevDesk.AppHost/Program.cs`.** Names, image tags, model names, and ports live in `DevDesk.AppHost.Core`. `Program.cs` should read as a list of resources, nothing to decode.
+1. **No magic strings or numbers in `DevDesk.AppHost/AppHost.cs`.** Names, image tags, model names, and ports live in `ResourceNames.cs`, `ContainerImages.cs`, `ModelNames.cs`, and `Topology.cs`, alongside `AppHost.cs` in the same project — no separate `AppHost.Core` project. `AppHost.cs` should read as a list of resources, nothing to decode.
 2. **`DevDesk.Server.Core` has zero I/O package references** — no Npgsql, no Dapper, no ASP.NET. If a change makes `DevDesk.Server.Core` need one of those, the logic belongs in `Data.cs` or a handler instead.
 3. **Tools live in `DevDesk.Mcp`, not inline in `DevDesk.Agent`.** The agent discovers tools; it doesn't define them.
 4. **`DevDesk.Agent` and `DevDesk.Server` stay separate services.** Don't merge them for convenience.
+
+## Git workflow
+
+- Commit only when explicitly asked, and only after the user has approved the specific change.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for every commit message (`feat:`, `fix:`, `chore:`, `docs:`, etc.).
 
 ## When something isn't covered here
 
