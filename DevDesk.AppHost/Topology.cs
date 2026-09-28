@@ -7,6 +7,9 @@ public static class Topology
     public const string DocsDirectory = "../docs";
     public const string DocsPathEnvironmentVariable = "DOCS_PATH";
 
+    // Read by DevDesk.ServiceDefaults to also export telemetry to grafana-lgtm.
+    public const string GrafanaOtlpEnvironmentVariable = "GRAFANA_OTLP_ENDPOINT";
+
     public const string GrafanaEndpointName = "grafana-ui";
     public const int GrafanaPort = 3000;
 

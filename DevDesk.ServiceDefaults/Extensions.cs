@@ -5,6 +5,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -17,6 +19,10 @@ public static class Extensions
 {
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
+
+    // Set by the AppHost (Topology.GrafanaOtlpEnvironmentVariable) to the grafana-lgtm OTLP gRPC endpoint.
+    private const string GrafanaOtlpEndpointKey = "GRAFANA_OTLP_ENDPOINT";
+    private const string GrafanaExporterName = "grafana";
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
@@ -68,12 +74,16 @@ public static class Extensions
                 metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    // Chat-client and agent metrics (names carry an "Experimental." prefix in some versions).
+                    .AddMeter("*Microsoft.Extensions.AI*", "*Microsoft.Agents.AI*");
             })
             .WithTracing(tracing =>
             {
                 tracing
                     .AddSource(builder.Environment.ApplicationName)
+                    // Chat-client and agent spans (names carry an "Experimental." prefix in some versions).
+                    .AddSource("*Microsoft.Extensions.AI*", "*Microsoft.Agents.AI*")
                     .AddAspNetCoreInstrumentation(tracing =>
                         // Exclude health check requests from tracing
                         tracing.Filter = context =>
@@ -97,7 +107,52 @@ public static class Extensions
             builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
         );
 
-        if (useOtlpExporter)
+        var grafanaEndpoint = builder.Configuration[GrafanaOtlpEndpointKey];
+
+        if (!string.IsNullOrWhiteSpace(grafanaEndpoint))
+        {
+            // UseOtlpExporter() takes one destination, so register each signal's exporter explicitly:
+            // the Aspire dashboard (from the standard OTEL_* settings) and grafana-lgtm.
+            void ConfigureGrafana(OtlpExporterOptions options)
+            {
+                options.Endpoint = new Uri(grafanaEndpoint);
+                options.Protocol = OtlpExportProtocol.Grpc;
+                // Don't forward the Aspire dashboard's API key to a different backend.
+                options.Headers = null;
+            }
+
+            builder.Logging.AddOpenTelemetry(logging =>
+            {
+                if (useOtlpExporter)
+                {
+                    logging.AddOtlpExporter();
+                }
+
+                logging.AddOtlpExporter(GrafanaExporterName, ConfigureGrafana);
+            });
+
+            builder
+                .Services.AddOpenTelemetry()
+                .WithMetrics(metrics =>
+                {
+                    if (useOtlpExporter)
+                    {
+                        metrics.AddOtlpExporter();
+                    }
+
+                    metrics.AddOtlpExporter(GrafanaExporterName, ConfigureGrafana);
+                })
+                .WithTracing(tracing =>
+                {
+                    if (useOtlpExporter)
+                    {
+                        tracing.AddOtlpExporter();
+                    }
+
+                    tracing.AddOtlpExporter(GrafanaExporterName, ConfigureGrafana);
+                });
+        }
+        else if (useOtlpExporter)
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }

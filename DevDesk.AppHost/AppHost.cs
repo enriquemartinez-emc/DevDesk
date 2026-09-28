@@ -41,13 +41,26 @@ var observability = builder
     .WithEndpoint(
         port: Topology.GrafanaPort,
         targetPort: Topology.GrafanaPort,
-        name: Topology.GrafanaEndpointName
+        name: Topology.GrafanaEndpointName,
+        scheme: "http"
     )
-    .WithEndpoint(targetPort: Topology.OtlpGrpcPort, name: Topology.OtlpGrpcEndpointName)
-    .WithEndpoint(targetPort: Topology.OtlpHttpPort, name: Topology.OtlpHttpEndpointName);
+    .WithEndpoint(
+        targetPort: Topology.OtlpGrpcPort,
+        name: Topology.OtlpGrpcEndpointName,
+        scheme: "http"
+    )
+    .WithEndpoint(
+        targetPort: Topology.OtlpHttpPort,
+        name: Topology.OtlpHttpEndpointName,
+        scheme: "http"
+    );
+
+// Every service also exports its telemetry here (in addition to the Aspire dashboard).
+var grafanaOtlp = observability.GetEndpoint(Topology.OtlpGrpcEndpointName);
 
 var server = builder
     .AddProject<Projects.DevDesk_Server>(ResourceNames.Server)
+    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WaitFor(database)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
@@ -58,6 +71,7 @@ var server = builder
 #pragma warning disable ASPIREMCP001
 var mcp = builder
     .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
+    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WaitFor(database)
     .WithReference(embeddingModel)
@@ -72,6 +86,7 @@ var mcp = builder
 // SearchRunbooks from DevDesk.Mcp as an MCP client, and streams to the frontend via AG-UI.
 var agent = builder
     .AddProject<Projects.DevDesk_Agent>(ResourceNames.Agent)
+    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(chatModel)
     .WaitFor(chatModel)
     .WithReference(mcp)
@@ -94,6 +109,7 @@ _ = builder
 // and writes them to doc_chunks. It waits for mcp because DevDesk.Mcp creates the doc_chunks table.
 var ingestion = builder
     .AddProject<Projects.DevDesk_Ingestion>(ResourceNames.Ingestion)
+    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WithReference(runbooks)
     .WithReference(embeddingModel)
