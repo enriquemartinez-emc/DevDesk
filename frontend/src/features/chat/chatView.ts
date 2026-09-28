@@ -19,7 +19,9 @@ function contentText(content: unknown): string {
 
   if (Array.isArray(content)) {
     return content
-      .map((part: { type?: string; text?: string }) => (part.type === 'text' ? (part.text ?? '') : ''))
+      .map((part: { type?: string; text?: string }) =>
+        part.type === 'text' ? (part.text ?? '') : '',
+      )
       .join('');
   }
 

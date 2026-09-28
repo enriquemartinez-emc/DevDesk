@@ -28,7 +28,12 @@ export function ChatPanel({ draft, onDraftChange }: ChatPanelProps) {
     <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium">Assistant</h2>
-        <Button variant="ghost" size="sm" onClick={reset} disabled={items.length === 0 && !isRunning}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={reset}
+          disabled={items.length === 0 && !isRunning}
+        >
           <RotateCcw />
           New conversation
         </Button>

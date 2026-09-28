@@ -123,6 +123,7 @@ Things that cost time once and aren't obvious from the code:
 
 - **No browser end-to-end tests without approval.** Don't drive the app with `playwright-cli` (or any other browser automation) unless the user explicitly says to. Until then, make frontend changes and verify them with the type check, lint, and build only.
 - **Format C# after every change.** Whenever you change a `.cs` file or a related C# file, run `dotnet csharpier format .` from the repo root before finishing.
+- **Format React after every change.** Whenever you change frontend code, run `npm run format` (Prettier) in `frontend/` before finishing. Generated and vendored files (`src/api`, `src/components/ui`, `src/components/ai-elements`, `src/index.css`, `src/lib/utils.ts`) are excluded in `frontend/.prettierignore`; don't reformat them by hand.
 
 ## When something isn't covered here
 

@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "fetch:openapi": "curl -s \"${SERVER_URL:?set SERVER_URL to the running server, e.g. http://localhost:5480}/openapi/v1.json\" -o openapi/devdesk-server.json",
-    "generate:api": "swagger-typescript-api generate --path ./openapi/devdesk-server.json --output ./src/api --name devdesk-api.ts --type-only-imports --extract-request-params --clean-output"
+    "generate:api": "swagger-typescript-api generate --path ./openapi/devdesk-server.json --output ./src/api --name devdesk-api.ts --type-only-imports --extract-request-params --clean-output",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@ag-ui/client": "^1.0.0",
@@ -48,6 +49,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "prettier": "^3.9.9",
     "swagger-typescript-api": "^13.13.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "8.48.1",

@@ -1,5 +1,11 @@
 import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
-import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from '@/components/ai-elements/tool';
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool';
 import type { ChatItem, ToolCallView } from './chatView';
 import { toolLabel } from './toolLabels';
 

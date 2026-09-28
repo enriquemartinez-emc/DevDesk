@@ -68,6 +68,7 @@ dotnet csharpier format .          # run after any C# change (dotnet tool restor
 
 cd frontend
 npm install
+npm run format                     # Prettier; run after any frontend change
 npx tsc -b && npm run lint && npm run build
 npm run fetch:openapi              # needs SERVER_URL=http://localhost:5480
 npm run generate:api               # regenerate the typed client from openapi/devdesk-server.json
