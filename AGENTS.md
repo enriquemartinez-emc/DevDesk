@@ -90,6 +90,7 @@ Things that cost time once and aren't obvious from the code:
 - **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.
 - **Startup cycle**: `server` → `agent` → `mcp` → `server`. The Server only references the agent (no `WaitFor`); don't add one.
 - **DevUI**: the AppHost needs `Microsoft.Agents.AI.DevUI` directly (it holds the web UI; without it `/devui/` is 404). The agent name in `DevDesk.Agent/Program.cs` must match `ResourceNames.SupportAgent`.
+- **No `"use client"` in the frontend**: this is a Vite SPA, so the Next.js directive does nothing. The shadcn and AI Elements registries still ship it (even with `"rsc": false`), so strip the first line from any file `shadcn add` brings in.
 - **API client generation**: don't pass `--http-client` to `swagger-typescript-api`; any value selects Axios. Regenerate with `npm run fetch:openapi` then `npm run generate:api`.
 
 ## Available agent skills
