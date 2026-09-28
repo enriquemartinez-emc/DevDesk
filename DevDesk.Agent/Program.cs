@@ -1,3 +1,4 @@
+using DevDesk.Agent;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
@@ -32,7 +33,7 @@ await using var mcpClient = await McpClient.CreateAsync(new HttpClientTransport(
 
 var mcpTools = await mcpClient.ListToolsAsync();
 
-var chatClient = app.Services.GetRequiredService<IChatClient>();
+var chatClient = new StableMessageIdChatClient(app.Services.GetRequiredService<IChatClient>());
 AIAgent agent = chatClient.AsAIAgent(
     name: "devdesk-support-agent",
     instructions: """
