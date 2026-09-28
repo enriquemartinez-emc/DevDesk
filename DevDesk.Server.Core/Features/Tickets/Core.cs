@@ -1,13 +1,13 @@
 namespace DevDesk.Server.Core.Features.Tickets;
 
-// ---- Value objects (Rule 7): wrap ids so they can't be swapped for each other ----
+// ---- Value objects: ids that can't be swapped for each other ----
 public readonly record struct TicketId(Guid Value);
 
 public readonly record struct RequesterId(Guid Value);
 
 public readonly record struct AgentId(Guid Value);
 
-// ---- OR: the ticket lifecycle — closed hierarchy (Rule 3) ----
+// ---- Ticket lifecycle: a closed hierarchy ----
 public abstract record Ticket
 {
     private protected Ticket(
@@ -75,7 +75,7 @@ public sealed record ClosedTicket(
     DateTimeOffset ClosedAt
 ) : Ticket(Id, Subject, Description, Requester, CreatedAt);
 
-// ---- Outcomes: only where a rule depends on more than the ticket's state. Closed, like Ticket ----
+// ---- Outcomes: only where a rule depends on more than the ticket's state ----
 public abstract record AssignOutcome
 {
     private protected AssignOutcome() { }
@@ -94,8 +94,7 @@ public sealed record Reopened(InProgressTicket Ticket) : ReopenOutcome;
 
 public sealed record ReopenWindowElapsed(DateTimeOffset ExpiredAt) : ReopenOutcome;
 
-// ---- Transitions and decisions (Rule 4). Each takes exactly the state it applies to, so an illegal
-// call (resolving an open ticket, closing an in-progress one) does not compile ----
+// ---- Transitions: each takes exactly the state it applies to, so illegal calls don't compile ----
 public static class TicketRules
 {
     // A closed ticket can still be reopened for this long; after that the customer opens a new one.

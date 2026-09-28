@@ -42,8 +42,22 @@ public static class CreateTicketEndpoint
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
         const string insertSql = """
-            insert into tickets (id, subject, description, requester_id, created_at, status)
-            values (@Id, @Subject, @Description, @RequesterId, @CreatedAt, @Status)
+            insert into tickets (
+                id,
+                subject,
+                description,
+                requester_id,
+                created_at,
+                status
+            )
+            values (
+                @Id,
+                @Subject,
+                @Description,
+                @RequesterId,
+                @CreatedAt,
+                @Status
+            )
             """;
 
         await connection.ExecuteAsync(

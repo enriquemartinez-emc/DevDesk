@@ -31,10 +31,8 @@ public static class SearchTicketsTool
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
-        // plainto_tsquery drops stop words, stems and neutralises tsquery operators in free text; the
-        // replace turns its AND into OR, because a question is rarely an exact phrase. ts_rank then puts
-        // the tickets matching the most keywords, including in their resolution note, first. Input with
-        // no usable words yields an empty query, which matches nothing.
+        // plainto_tsquery sanitizes free text; the replace turns its AND into OR, because a question is
+        // rarely an exact phrase. ts_rank puts the tickets matching the most keywords first.
         const string searchSql = $"""
             with documents as (
                 select t.*,

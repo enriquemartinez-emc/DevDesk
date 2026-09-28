@@ -34,8 +34,10 @@ public static class SearchRunbooksTool
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
         const string searchSql = """
-            select source_path as SourcePath, content as Content,
-                   1 - (embedding <=> @QueryEmbedding::vector) as Score
+            select
+                source_path as SourcePath,
+                content as Content,
+                1 - (embedding <=> @QueryEmbedding::vector) as Score
             from doc_chunks
             order by embedding <=> @QueryEmbedding::vector
             limit @TopK

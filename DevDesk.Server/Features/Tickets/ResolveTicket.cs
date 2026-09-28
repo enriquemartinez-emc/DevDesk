@@ -35,10 +35,18 @@ public static class ResolveTicketEndpoint
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
         const string selectSql = """
-            select id as Id, subject as Subject, description as Description,
-                   requester_id as RequesterId, created_at as CreatedAt, status as Status,
-                   assigned_agent as AssignedAgent, assigned_at as AssignedAt,
-                   resolution_note as ResolutionNote, resolved_at as ResolvedAt, closed_at as ClosedAt
+            select
+                id as Id,
+                subject as Subject,
+                description as Description,
+                requester_id as RequesterId,
+                created_at as CreatedAt,
+                status as Status,
+                assigned_agent as AssignedAgent,
+                assigned_at as AssignedAt,
+                resolution_note as ResolutionNote,
+                resolved_at as ResolvedAt,
+                closed_at as ClosedAt
             from tickets
             where id = @Id
             """;
@@ -69,7 +77,10 @@ public static class ResolveTicketEndpoint
 
         const string updateSql = """
             update tickets
-            set status = @Status, resolution_note = @ResolutionNote, resolved_at = @ResolvedAt
+            set
+                status = @Status,
+                resolution_note = @ResolutionNote,
+                resolved_at = @ResolvedAt
             where id = @Id
             """;
 
@@ -91,8 +102,7 @@ public static class ResolveTicketEndpoint
     }
 }
 
-// Property-only (no primary constructor) so Dapper materializes via its parameterless-ctor +
-// property-setter path. Npgsql returns timestamptz as DateTime, not DateTimeOffset, hence DateTime here.
+// Property-only so Dapper can materialize it; Npgsql returns timestamptz as DateTime.
 file sealed record DbTicketRow
 {
     public Guid Id { get; init; }

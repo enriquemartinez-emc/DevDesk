@@ -54,8 +54,20 @@ public sealed class RunbookIngestor(
                 await connection.ExecuteAsync(
                     new CommandDefinition(
                         """
-                        insert into doc_chunks (id, source_path, chunk_index, content, embedding)
-                        values (@Id, @SourcePath, @ChunkIndex, @Content, @Embedding::vector)
+                        insert into doc_chunks (
+                            id,
+                            source_path,
+                            chunk_index,
+                            content,
+                            embedding
+                        )
+                        values (
+                            @Id,
+                            @SourcePath,
+                            @ChunkIndex,
+                            @Content,
+                            @Embedding::vector
+                        )
                         """,
                         new
                         {

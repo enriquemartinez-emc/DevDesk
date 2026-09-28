@@ -1,13 +1,19 @@
 namespace DevDesk.Mcp;
 
-// Read model for the ticket tools. Property-only (no primary constructor) so Dapper materializes via
-// its parameterless-ctor + property-setter path; Npgsql returns timestamptz as DateTime.
+// Property-only so Dapper can materialize it; Npgsql returns timestamptz as DateTime.
 internal sealed record TicketRow
 {
     public const string Columns = """
-        id as Id, subject as Subject, description as Description, created_at as CreatedAt,
-        status as Status, assigned_agent as AssignedAgent, assigned_at as AssignedAt,
-        resolution_note as ResolutionNote, resolved_at as ResolvedAt, closed_at as ClosedAt
+        id as Id,
+        subject as Subject,
+        description as Description,
+        created_at as CreatedAt,
+        status as Status,
+        assigned_agent as AssignedAgent,
+        assigned_at as AssignedAt,
+        resolution_note as ResolutionNote,
+        resolved_at as ResolvedAt,
+        closed_at as ClosedAt
         """;
 
     public Guid Id { get; init; }

@@ -20,10 +20,18 @@ public static class ReopenTicketEndpoint
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
         const string selectSql = """
-            select id as Id, subject as Subject, description as Description,
-                   requester_id as RequesterId, created_at as CreatedAt, status as Status,
-                   assigned_agent as AssignedAgent, assigned_at as AssignedAt,
-                   resolution_note as ResolutionNote, resolved_at as ResolvedAt, closed_at as ClosedAt
+            select
+                id as Id,
+                subject as Subject,
+                description as Description,
+                requester_id as RequesterId,
+                created_at as CreatedAt,
+                status as Status,
+                assigned_agent as AssignedAgent,
+                assigned_at as AssignedAt,
+                resolution_note as ResolutionNote,
+                resolved_at as ResolvedAt,
+                closed_at as ClosedAt
             from tickets
             where id = @Id
             """;
@@ -66,8 +74,13 @@ public static class ReopenTicketEndpoint
 
         const string updateSql = """
             update tickets
-            set status = @Status, assigned_agent = @AssignedAgent, assigned_at = @AssignedAt,
-                resolution_note = null, resolved_at = null, closed_at = null
+            set
+                status = @Status,
+                assigned_agent = @AssignedAgent,
+                assigned_at = @AssignedAt,
+                resolution_note = null,
+                resolved_at = null,
+                closed_at = null
             where id = @Id
             """;
 
@@ -89,8 +102,7 @@ public static class ReopenTicketEndpoint
     }
 }
 
-// Property-only (no primary constructor) so Dapper materializes via its parameterless-ctor +
-// property-setter path. Npgsql returns timestamptz as DateTime, not DateTimeOffset, hence DateTime here.
+// Property-only so Dapper can materialize it; Npgsql returns timestamptz as DateTime.
 file sealed record DbTicketRow
 {
     public Guid Id { get; init; }
