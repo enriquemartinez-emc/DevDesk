@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MessageSquareText } from 'lucide-react';
 import type { TicketResponse } from '@/api/devdesk-api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -14,7 +15,10 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ResolveTicketDialog } from './ResolveTicketDialog';
+import { type TicketAction, availableActions, ticketActionLabels } from './ticketActions';
 import { ticketStatusLabel } from './ticketStatus';
+import { useTicketActions } from './useTicketActions';
 import { useTickets } from './useTickets';
 
 type TicketListProps = {
@@ -23,6 +27,26 @@ type TicketListProps = {
 
 export function TicketList({ onAsk }: TicketListProps) {
   const { data, isPending, isError, refetch } = useTickets();
+  const actions = useTicketActions();
+  const [resolving, setResolving] = useState<TicketResponse | null>(null);
+
+  const runAction = (action: TicketAction, ticket: TicketResponse) => {
+    actions.reset();
+    switch (action) {
+      case 'assign':
+        actions.assign(ticket.id);
+        break;
+      case 'resolve':
+        setResolving(ticket);
+        break;
+      case 'close':
+        actions.close(ticket.id);
+        break;
+      case 'reopen':
+        actions.reopen(ticket.id);
+        break;
+    }
+  };
 
   if (isPending) {
     return (
@@ -52,31 +76,61 @@ export function TicketList({ onAsk }: TicketListProps) {
       <Empty>
         <EmptyHeader>
           <EmptyTitle>No tickets yet</EmptyTitle>
-          <EmptyDescription>Tickets created through the API will show up here.</EmptyDescription>
+          <EmptyDescription>Use “New ticket” to create the first one.</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
   }
 
   return (
-    <ItemGroup className="gap-3">
-      {data.map((ticket) => (
-        <Item key={ticket.id} variant="outline" size="sm">
-          <ItemContent>
-            <ItemTitle>{ticket.subject}</ItemTitle>
-            <ItemDescription>{ticket.description}</ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Badge variant="secondary">{ticketStatusLabel(ticket.status)}</Badge>
-          </ItemActions>
-          <ItemFooter>
-            <Button variant="ghost" size="sm" onClick={() => onAsk(ticket)}>
-              <MessageSquareText data-icon="inline-start" />
-              Ask about this ticket
-            </Button>
-          </ItemFooter>
-        </Item>
-      ))}
-    </ItemGroup>
+    <>
+      {!resolving && actions.errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{actions.errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      <ItemGroup className="gap-3">
+        {data.map((ticket) => (
+          <Item key={ticket.id} variant="outline" size="sm">
+            <ItemContent>
+              <ItemTitle>{ticket.subject}</ItemTitle>
+              <ItemDescription>{ticket.description}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Badge variant="secondary">{ticketStatusLabel(ticket.status)}</Badge>
+            </ItemActions>
+            <ItemFooter>
+              <Button variant="ghost" size="sm" onClick={() => onAsk(ticket)}>
+                <MessageSquareText data-icon="inline-start" />
+                Ask about this ticket
+              </Button>
+              {availableActions(ticket.status).map((action) => (
+                <Button
+                  key={action}
+                  variant="outline"
+                  size="sm"
+                  disabled={actions.isPending}
+                  onClick={() => runAction(action, ticket)}
+                >
+                  {ticketActionLabels[action]}
+                </Button>
+              ))}
+            </ItemFooter>
+          </Item>
+        ))}
+      </ItemGroup>
+
+      <ResolveTicketDialog
+        ticket={resolving}
+        onResolve={(id, note) => actions.resolve(id, note, () => setResolving(null))}
+        onClose={() => {
+          actions.reset();
+          setResolving(null);
+        }}
+        isPending={actions.isPending}
+        errorMessage={actions.errorMessage}
+      />
+    </>
   );
 }

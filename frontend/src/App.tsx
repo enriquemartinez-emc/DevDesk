@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { TicketResponse } from '@/api/devdesk-api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ChatPanel } from '@/features/chat/ChatPanel';
-import { TicketList } from '@/features/tickets/TicketList';
+import { TicketsPanel } from '@/features/tickets/TicketsPanel';
 
 function App() {
   const [draft, setDraft] = useState('');
@@ -25,14 +25,7 @@ function App() {
           </CardContent>
         </Card>
 
-        <Card className="min-h-0 overflow-hidden">
-          <CardHeader>
-            <CardTitle>Tickets</CardTitle>
-          </CardHeader>
-          <CardContent className="min-h-0 overflow-y-auto">
-            <TicketList onAsk={askAboutTicket} />
-          </CardContent>
-        </Card>
+        <TicketsPanel onAsk={askAboutTicket} />
       </main>
     </div>
   );
