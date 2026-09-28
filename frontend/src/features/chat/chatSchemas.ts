@@ -17,3 +17,12 @@ export function parseToolResult(content: string): string {
     return content;
   }
 }
+
+// Tool-call arguments arrive as a JSON string; fall back to the raw text if it isn't valid JSON.
+export function parseToolArguments(json: string): unknown {
+  try {
+    return JSON.parse(json) as unknown;
+  } catch {
+    return json;
+  }
+}

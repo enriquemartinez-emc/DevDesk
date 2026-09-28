@@ -1,9 +1,10 @@
 import type { Message } from '@ag-ui/client';
-import { parseToolResult } from './chatSchemas';
+import { parseToolArguments, parseToolResult } from './chatSchemas';
 
 export type ToolCallView = {
   id: string;
   name: string;
+  args: unknown;
   result: string | null;
 };
 
@@ -44,6 +45,7 @@ export function toChatItems(messages: Message[]): ChatItem[] {
       const toolCalls = (message.toolCalls ?? []).map((call) => ({
         id: call.id,
         name: call.function.name,
+        args: parseToolArguments(call.function.arguments),
         result: toolResults.get(call.id) ?? null,
       }));
 

@@ -1,7 +1,12 @@
-import { type FormEvent, type KeyboardEvent, useState } from 'react';
+import { type KeyboardEvent, useState } from 'react';
 import { SendHorizonal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 import { MAX_MESSAGE_LENGTH, chatInputSchema } from './chatSchemas';
 
 type ChatComposerProps = {
@@ -26,11 +31,6 @@ export function ChatComposer({ value, onChange, onSend, disabled }: ChatComposer
     onChange('');
   };
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    submit();
-  };
-
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -41,23 +41,34 @@ export function ChatComposer({ value, onChange, onSend, disabled }: ChatComposer
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-1">
-      <div className="flex items-end gap-2">
-        <Textarea
+    <div className="space-y-2">
+      <InputGroup>
+        <InputGroupTextarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about a ticket or how to fix something…"
-          rows={2}
           maxLength={MAX_MESSAGE_LENGTH}
           aria-label="Message"
-          className="min-h-0 resize-none"
         />
-        <Button type="submit" size="icon" disabled={disabled} aria-label="Send message">
-          <SendHorizonal />
-        </Button>
-      </div>
-      {validationError && <p className="text-xs text-destructive">{validationError}</p>}
-    </form>
+        <InputGroupAddon align="block-end">
+          <InputGroupButton
+            variant="default"
+            size="icon-sm"
+            className="ml-auto"
+            onClick={submit}
+            disabled={disabled}
+            aria-label="Send message"
+          >
+            <SendHorizonal />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+      {validationError && (
+        <Alert variant="destructive">
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
+    </div>
   );
 }

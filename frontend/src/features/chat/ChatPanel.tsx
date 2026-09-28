@@ -1,6 +1,15 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { useMemo } from 'react';
+import { MessageSquare, RotateCcw } from 'lucide-react';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from '@/components/ai-elements/conversation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { ChatComposer } from './ChatComposer';
 import { MessageItem } from './MessageItem';
 import { toChatItems } from './chatView';
@@ -14,11 +23,6 @@ type ChatPanelProps = {
 export function ChatPanel({ draft, onDraftChange }: ChatPanelProps) {
   const { messages, isRunning, errorMessage, send, reset } = useAgentChat();
   const items = useMemo(() => toChatItems(messages), [messages]);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [items, isRunning]);
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -30,24 +34,32 @@ export function ChatPanel({ draft, onDraftChange }: ChatPanelProps) {
         </Button>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1" aria-live="polite">
-        {items.length === 0 && !isRunning && (
-          <p className="text-sm text-muted-foreground">
-            Ask what's going on with a ticket, or how to fix a problem — for example "How do we reset a
-            customer's 2FA?"
-          </p>
-        )}
-        {items.map((item) => (
-          <MessageItem key={item.id} item={item} />
-        ))}
-        {isRunning && <p className="text-xs text-muted-foreground">Thinking…</p>}
-        {errorMessage && (
-          <p role="alert" className="text-sm text-destructive">
-            {errorMessage}
-          </p>
-        )}
-        <div ref={endRef} />
-      </div>
+      <Conversation>
+        <ConversationContent>
+          {items.length === 0 && !isRunning ? (
+            <ConversationEmptyState
+              icon={<MessageSquare className="size-6" />}
+              title="Ask DevDesk"
+              description={`Ask about a ticket's status, or how to fix a problem, for example "How do we reset a customer's 2FA?"`}
+            />
+          ) : (
+            items.map((item) => <MessageItem key={item.id} item={item} />)
+          )}
+          {isRunning && (
+            <Badge variant="secondary">
+              <Spinner data-icon="inline-start" />
+              Thinking…
+            </Badge>
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
+
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <ChatComposer value={draft} onChange={onDraftChange} onSend={send} disabled={isRunning} />
     </div>
