@@ -21,7 +21,7 @@ DevDesk is a support-ticket assistant. Support agents ask it things like:
 | Database                   | PostgreSQL 18 + pgvector — structured (`tickets`) and vector (`doc_chunks`) data in one instance                                                                                             |
 | Object storage             | Azure Storage emulator (Azurite) — raw runbooks before ingestion                                                                                                                             |
 | LLM + embeddings           | Ollama (community toolkit integration) — local chat + embedding models                                                                                                                       |
-| API docs                   | **Scalar** — interactive reference UI over the Minimal API's OpenAPI document                                                                                                                |
+| API docs                   | **Scalar** (planned, not yet added) — interactive reference UI over the Minimal API's OpenAPI document                                                                                                                |
 | Typed client generation    | **swagger-typescript-api** — generates the frontend's typed API client from that same OpenAPI document                                                                                       |
 | Frontend                   | React + Vite, **TanStack Query** (server state/caching), **Zod** (runtime validation), **shadcn/ui** (components)                                                                            |
 | Observability              | OpenTelemetry throughout, Aspire Dashboard (dev loop), DevUI (agent conversation/tool-call debugging), `grafana-lgtm` container (Collector + Prometheus + Loki + Tempo + Grafana, one image) |
@@ -29,25 +29,26 @@ DevDesk is a support-ticket assistant. Support agents ask it things like:
 ## Architecture
 
 ```
-DevDesk.AppHost (orchestrator, config lives in DevDesk.AppHost.Core)
- ├─ frontend           React + Vite + shadcn/ui — chat UI
- ├─ DevDesk.Server    Minimal API — ticket CRUD, proxies /chat to the agent
- ├─ DevDesk.Agent         Hosts the AIAgent (Microsoft Agent Framework)
- ├─ ├─ DevUI                          — agent conversation/tool-call
- ├─ DevDesk.Mcp           MCP server — groups LookupTicket + SearchRunbooks as tools
- ├─ DevDesk.Ingestion     One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
- ├─ Postgres 18 (pgvector image)   — tickets + doc_chunks
+DevDesk.AppHost (orchestrator; names, images, models and ports are constants beside AppHost.cs)
+ ├─ frontend           React + Vite + shadcn/ui — chat UI (AG-UI stream) + tickets panel
+ ├─ DevDesk.Server     Minimal API — ticket CRUD; forwards /agui to the agent in published builds
+ ├─ DevDesk.Agent      Hosts the AIAgent (Microsoft Agent Framework): AG-UI + OpenAI Responses endpoints
+ ├─ DevDesk.Mcp        MCP server — groups LookupTicket + SearchRunbooks as tools
+ ├─ DevDesk.Ingestion  One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
+ ├─ DevUI              In-process aggregator (no container) — agent conversation/tool-call debugging
+ ├─ Postgres 18 (pgvector image)     — tickets + doc_chunks
  ├─ Azure Storage emulator (Azurite) — raw runbook docs before ingestion
- ├─ Ollama (community toolkit)     — local chat + embedding models
- debugging
- └─ grafana-lgtm container         — Collector + Prometheus + Loki + Tempo + Grafana, one image
+ ├─ Ollama (community toolkit)       — local chat + embedding models
+ └─ grafana-lgtm container           — Collector + Prometheus + Loki + Tempo + Grafana, one image
 ```
 
-Every one of these is a native Aspire resource, added in `DevDesk.AppHost/Program.cs`. `aspire run` is the only setup command — it starts the database, storage emulator, local models, every service, and the full observability stack together.
+Every one of these is a native Aspire resource, added in `DevDesk.AppHost/AppHost.cs`. `aspire start` is the only setup command — it starts the database, storage emulator, local models, every service, and the full observability stack together.
+
+**Chat flow**: the browser streams AG-UI events from `/agui`. In dev, Vite proxies `/agui` straight to `DevDesk.Agent`; in a published build `DevDesk.Server` forwards it (YARP). The agent calls tools on `DevDesk.Mcp`; `LookupTicket` calls the Server's ticket API and `SearchRunbooks` embeds the query with Ollama and searches `doc_chunks` in pgvector.
 
 **Agent design**: `DevDesk.Agent` doesn't define its tools inline. It discovers `LookupTicket` and `SearchRunbooks` from `DevDesk.Mcp` — that's what "grouping the tools on an MCP server" means here. `DevDesk.Agent` is a separate service from `DevDesk.Server` deliberately: ticket CRUD and LLM calls have different latency, cost, and scaling profiles.
 
-**Observability**: MAF instruments itself with OpenTelemetry, and Aspire's `ServiceDefaults` wires every project's OTLP export automatically. The `grafana-lgtm` container is a single image that bundles the Collector, Prometheus (metrics), Loki (logs), Tempo (traces), and Grafana — no hand-written collector config. Use the Aspire Dashboard for day-to-day dev-loop debugging and Grafana for a production-shaped view; they're not redundant, they're different altitudes. DevUI adds a third altitude: stepping through one agent conversation's tool calls specifically.
+**Observability**: MAF and Microsoft.Extensions.AI instrument themselves with OpenTelemetry, and `ServiceDefaults` exports every project's traces, metrics and logs to both the Aspire Dashboard and `grafana-lgtm` (the AppHost passes each service `GRAFANA_OTLP_ENDPOINT`). The `grafana-lgtm` container is a single image that bundles the Collector, Prometheus (metrics), Loki (logs), Tempo (traces), and Grafana — no hand-written collector config. Use the Aspire Dashboard for day-to-day dev-loop debugging and Grafana for a production-shaped view; they're not redundant, they're different altitudes. DevUI adds a third altitude: stepping through one agent conversation's tool calls specifically.
 
 ## Folder structure
 
@@ -55,28 +56,46 @@ Every one of these is a native Aspire resource, added in `DevDesk.AppHost/Progra
 DevDesk/
 ├── DevDesk.AppHost/              # orchestrator — AppHost.cs plus ResourceNames.cs, ContainerImages.cs,
 │                                  # ModelNames.cs, Topology.cs constants, no other logic
-├── DevDesk.Server.Core/                 # domain logic — zero I/O references, ever
+├── DevDesk.ServiceDefaults/      # shared OpenTelemetry, health checks, service discovery, resilience
+├── DevDesk.Server.Core/          # domain logic — zero I/O references, ever
 │   └── Features/
 │       └── Tickets/
-│           └── Core.cs           # Ticket, TicketStatus, TicketRules
+│           └── Core.cs           # Ticket (closed hierarchy: Open/InProgress/Resolved/Closed) + TicketRules
 ├── DevDesk.Server.Core.Tests/    # unit tests against DevDesk.Server.Core, zero mocks, zero DB
-├── DevDesk.Server/           # Minimal API — ticket CRUD + /chat proxy
+├── DevDesk.Server/               # Minimal API
+│   ├── Common/                   # validation filter shared by endpoints
 │   └── Features/
-│       └── Tickets/
-│           └── Data.cs           # Dapper queries + row-to-domain mapping (I/O lives here, not in Core)
+│       ├── Tickets/              # one file per use case: request, validator, endpoint, handler, SQL,
+│       │                         # and a file-scoped Db*Row DTO; plus TicketsEndpoints.cs (route group)
+│       └── Chat/ChatProxy.cs     # forwards /agui to the agent
 ├── DevDesk.Mcp/                  # MCP server — LookupTicket, SearchRunbooks tools
-├── DevDesk.Agent/                # hosts the AIAgent, MCP client, chat model
+├── DevDesk.Agent/                # hosts the AIAgent, MCP client, chat model, AG-UI + DevUI endpoints
 ├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks
-├── frontend/                  # React + Vite + shadcn/ui
+├── frontend/                     # React + Vite + shadcn/ui
+│   ├── openapi/                  # committed OpenAPI document the API client is generated from
+│   └── src/{api,features,components,lib}   # api/ is generated; features/ hold hooks + components
 └── docs/                         # sample runbooks, ingested into pgvector via Azurite
 ```
 
-New backend features follow the same `Core.cs` (pure) + `Data.cs` (I/O) split as `Tickets`, under `Features/{FeatureName}/`. Don't add a feature folder that mixes both in one file.
+New backend features put pure decisions in `Features/{FeatureName}/Core.cs` in `DevDesk.Server.Core` and everything with I/O in one use-case file per endpoint under `DevDesk.Server/Features/{FeatureName}/`, following `emc-fcis-feature-slice`. Don't add `Data` or `Mapper` classes, and don't put I/O in `Core.cs`.
+
+## Gotchas
+
+Things that cost time once and aren't obvious from the code:
+
+- **Postgres 18 data volume**: `WithDataVolume()` picks the container data directory from the image tag at call time, and the pgvector tag doesn't parse as 18+. Call it *before* `WithImage(...)`.
+- **Slow local models**: `ServiceDefaults` raises the standard resilience timeouts (3 min per attempt, 6 min total); the ~30s defaults cancelled Ollama chat calls mid-generation.
+- **MCP endpoint**: the MCP client transport needs a concrete `http(s)` URL and rejects Aspire's `https+http://` scheme, so `DevDesk.Agent` reads `services:mcp:*` configuration.
+- **AG-UI nulls**: the Agent Framework hosting package loses the AG-UI SDK's omit-nulls rule on net10, and the TypeScript client rejects `null` fields. `DevDesk.Agent` inserts `AGUIJsonUtilities.DefaultTypeInfoResolver` into the JSON options; keep it.
+- **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.
+- **Startup cycle**: `server` → `agent` → `mcp` → `server`. The Server only references the agent (no `WaitFor`); don't add one.
+- **DevUI**: the AppHost needs `Microsoft.Agents.AI.DevUI` directly (it holds the web UI; without it `/devui/` is 404). The agent name in `DevDesk.Agent/Program.cs` must match `ResourceNames.SupportAgent`.
+- **API client generation**: don't pass `--http-client` to `swagger-typescript-api`; any value selects Axios. Regenerate with `npm run fetch:openapi` then `npm run generate:api`.
 
 ## Available agent skills
 
 - `emc-fcis-feature-slice` — use for any .NET endpoint business
-  logic: Core/Data.cs/Handler split, immutable domain records
+  logic: Core/handler split, immutable domain records
 - `emc-pragmatic-type-driven-domain-modeling` — use when modeling new C# domain
   types, especially status/lifecycle fields (prefer sum types over
   enums/booleans for state)
@@ -91,7 +110,7 @@ New backend features follow the same `Core.cs` (pure) + `Data.cs` (I/O) split as
 ## Non-negotiable rules
 
 1. **No magic strings or numbers in `DevDesk.AppHost/AppHost.cs`.** Names, image tags, model names, and ports live in `ResourceNames.cs`, `ContainerImages.cs`, `ModelNames.cs`, and `Topology.cs`, alongside `AppHost.cs` in the same project — no separate `AppHost.Core` project. `AppHost.cs` should read as a list of resources, nothing to decode.
-2. **`DevDesk.Server.Core` has zero I/O package references** — no Npgsql, no Dapper, no ASP.NET. If a change makes `DevDesk.Server.Core` need one of those, the logic belongs in `Data.cs` or a handler instead.
+2. **`DevDesk.Server.Core` has zero I/O package references** — no Npgsql, no Dapper, no ASP.NET. If a change makes `DevDesk.Server.Core` need one of those, the logic belongs in a handler in `DevDesk.Server` instead.
 3. **Tools live in `DevDesk.Mcp`, not inline in `DevDesk.Agent`.** The agent discovers tools; it doesn't define them.
 4. **`DevDesk.Agent` and `DevDesk.Server` stay separate services.** Don't merge them for convenience.
 
@@ -107,4 +126,4 @@ New backend features follow the same `Core.cs` (pure) + `Data.cs` (I/O) split as
 
 ## When something isn't covered here
 
-Flag the gap and propose an approach rather than guessing silently — especially anything that would introduce a new container, a new orchestration mechanism, or a change to the `Core`/`Data` split described above.
+Flag the gap and propose an approach rather than guessing silently — especially anything that would introduce a new container, a new orchestration mechanism, or a change to the `Core`/handler split described above.
