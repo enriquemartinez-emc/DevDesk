@@ -36,7 +36,7 @@ public static class Extensions
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default. The default ~30s attempt timeout is too short for
-            // local LLM inference (Ollama on CPU) - raise it so DevDesk.Agent's chat calls don't
+            // local LLM inference (Ollama on CPU) - raise it so the support chat's calls in DevDesk.Server don't
             // get cancelled mid-generation. SamplingDuration must be >= 2x AttemptTimeout.
             http.AddStandardResilienceHandler(options =>
             {

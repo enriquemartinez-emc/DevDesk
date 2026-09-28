@@ -14,11 +14,10 @@ public static class ResourceNames
 
     public const string Server = "server";
     public const string Mcp = "mcp";
-    public const string Agent = "agent";
     public const string Ingestion = "ingestion";
     public const string DevUI = "devui";
 
-    // The AIAgent name registered in DevDesk.Agent/Program.cs (AddAIAgent); DevUI lists agents by it.
+    // The AIAgent name registered in DevDesk.Server/Features/Chat/SupportChat.cs (AddAIAgent); DevUI lists agents by it.
     public const string SupportAgent = "devdesk-support-agent";
     public const string WebFrontend = "webfrontend";
 }

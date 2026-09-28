@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { HttpAgent, type Message } from '@ag-ui/client';
 
-// DevDesk.Agent speaks AG-UI; the Vite dev server proxies /agui to it.
+// DevDesk.Server speaks AG-UI at /agui; the Vite dev server proxies it there.
 const AGENT_URL = '/agui';
 
 function createAgent(): HttpAgent {

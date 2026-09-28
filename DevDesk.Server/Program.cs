@@ -5,22 +5,22 @@ using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 
-// Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.AddNpgsqlDataSource("devdeskdb");
-builder.Services.AddChatProxy();
+await using var mcp = await McpConnection.ConnectAsync(builder.Configuration);
+builder.AddSupportChat(mcp);
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Keeps /agui and the DevUI endpoints out of the document the frontend client is generated from.
+builder.Services.AddOpenApi(options =>
+    options.ShouldInclude = api => api.RelativePath?.StartsWith("api/") == true
+);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -34,7 +34,7 @@ await TicketsSchema.EnsureCreatedAsync(
 );
 
 app.MapTicketsEndpoints();
-app.MapChatProxy();
+app.MapSupportChat();
 
 app.MapDefaultEndpoints();
 

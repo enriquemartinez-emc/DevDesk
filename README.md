@@ -28,8 +28,8 @@ runbook ingestion job once the `mcp` service (which creates the `doc_chunks` tab
 
 **First run is slow.** It pulls the container images and downloads the models (`llama3.2`, roughly 2 GB, and
 `nomic-embed-text`, roughly 270 MB). Data and models persist in Docker volumes, so later starts take a minute or two.
-Wait until `agent`, `mcp`, `server` and `webfrontend` are healthy and `ingestion` shows *Finished* in the dashboard
-(or run `aspire wait agent`).
+Wait until `mcp`, `server` and `webfrontend` are healthy and `ingestion` shows *Finished* in the dashboard
+(or run `aspire wait server`).
 
 ## Where to look
 

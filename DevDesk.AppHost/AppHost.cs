@@ -2,10 +2,8 @@ using DevDesk.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Postgres 18 + pgvector — structured (tickets) and vector (doc_chunks) data in one instance.
-// WithDataVolume() picks the container's data directory from the image tag at the time it's
-// called (Postgres 18 changed layout - see https://github.com/docker-library/postgres/issues/1259).
-// Our pgvector tag doesn't parse as "18+", so call it before swapping the image via WithImage().
+// WithDataVolume() picks the data directory from the image tag when it is called, and the pgvector
+// tag doesn't parse as Postgres 18+, so call it before WithImage().
 var postgres = builder
     .AddPostgres(ResourceNames.Postgres)
     .WithLifetime(ContainerLifetime.Persistent)
@@ -14,14 +12,12 @@ var postgres = builder
 
 var database = postgres.AddDatabase(ResourceNames.Database);
 
-// Azure Storage emulator (Azurite) — raw runbooks before ingestion.
 var storage = builder
     .AddAzureStorage(ResourceNames.Storage)
     .RunAsEmulator(azurite => azurite.WithLifetime(ContainerLifetime.Persistent).WithDataVolume());
 
 var runbooks = storage.AddBlobs(ResourceNames.RunbooksBlobs);
 
-// Ollama (community toolkit) — local chat + embedding models.
 var ollama = builder
     .AddOllama(ResourceNames.Ollama)
     .WithLifetime(ContainerLifetime.Persistent)
@@ -30,7 +26,6 @@ var ollama = builder
 var chatModel = ollama.AddModel(ModelNames.Chat);
 var embeddingModel = ollama.AddModel(ModelNames.Embedding);
 
-// grafana-lgtm — Collector + Prometheus (metrics) + Loki (logs) + Tempo (traces) + Grafana, one image.
 var observability = builder
     .AddContainer(
         ResourceNames.Observability,
@@ -55,7 +50,6 @@ var observability = builder
         scheme: "http"
     );
 
-// Every service also exports its telemetry here (in addition to the Aspire dashboard).
 var grafanaOtlp = observability.GetEndpoint(Topology.OtlpGrpcEndpointName);
 
 var server = builder
@@ -63,12 +57,12 @@ var server = builder
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WaitFor(database)
+    .WithReference(chatModel)
+    .WaitFor(chatModel)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
-// DevDesk.Mcp groups LookupTicket and SearchTickets (both read the tickets table directly) and
-// SearchRunbooks (pgvector similarity search embedded via the Ollama embedding model) as MCP tools.
-// It waits for the server only because the server creates the tickets table.
+// No WaitFor(server): only the server-hosted agent calls mcp, after it has created the tickets table.
 #pragma warning disable ASPIREMCP001
 var mcp = builder
     .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
@@ -77,36 +71,18 @@ var mcp = builder
     .WaitFor(database)
     .WithReference(embeddingModel)
     .WaitFor(embeddingModel)
-    .WaitFor(server)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithMcpServer();
 #pragma warning restore ASPIREMCP001
 
-// DevDesk.Agent hosts the AIAgent (Microsoft Agent Framework), discovers LookupTicket, SearchTickets
-// and SearchRunbooks from DevDesk.Mcp as an MCP client, and streams to the frontend via AG-UI.
-var agent = builder
-    .AddProject<Projects.DevDesk_Agent>(ResourceNames.Agent)
-    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
-    .WithReference(chatModel)
-    .WaitFor(chatModel)
-    .WithReference(mcp)
-    .WaitFor(mcp)
-    .WithHttpHealthCheck(Topology.HealthCheckPath)
-    .WithExternalHttpEndpoints();
+server.WithReference(mcp).WaitFor(mcp);
 
-// The Server forwards /agui to the agent in a published build. Reference only, no WaitFor:
-// server -> agent -> mcp -> server would be a startup cycle.
-server.WithReference(agent);
-
-// DevUI: an in-process aggregator (no container) for stepping through agent conversations and
-// tool calls. It talks to the agent's OpenAI Responses/Conversations endpoints.
 _ = builder
     .AddDevUI(ResourceNames.DevUI)
-    .WithAgentService(agent, agents: [new(ResourceNames.SupportAgent)])
-    .WaitFor(agent);
+    .WithAgentService(server, agents: [new(ResourceNames.SupportAgent)])
+    .WaitFor(server);
 
-// DevDesk.Ingestion is a one-shot job: it uploads docs/*.md to blob storage, then chunks, embeds
-// and writes them to doc_chunks. It waits for mcp because DevDesk.Mcp creates the doc_chunks table.
+// Waits for mcp because DevDesk.Mcp creates the doc_chunks table.
 var ingestion = builder
     .AddProject<Projects.DevDesk_Ingestion>(ResourceNames.Ingestion)
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
@@ -124,9 +100,7 @@ var ingestion = builder
 var webfrontend = builder
     .AddViteApp(ResourceNames.WebFrontend, "../frontend")
     .WithReference(server)
-    .WaitFor(server)
-    .WithReference(agent)
-    .WaitFor(agent);
+    .WaitFor(server);
 
 server.PublishWithContainerFiles(webfrontend, "wwwroot");
 

@@ -1,10 +1,9 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
 
-namespace DevDesk.Agent;
+namespace DevDesk.Server.Features.Chat;
 
-// OllamaSharp's streaming updates carry no MessageId, and the AG-UI converter mints a new message
-// per update when it is missing - one message per token. Stamp one id per model turn instead.
+// OllamaSharp streams updates without a MessageId, which AG-UI turns into one message per token.
 public sealed class StableMessageIdChatClient(IChatClient inner) : DelegatingChatClient(inner)
 {
     public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
