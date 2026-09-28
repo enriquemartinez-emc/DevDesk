@@ -66,7 +66,20 @@ var server = builder
     .WithReference(chatModel)
     .WaitFor(chatModel)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
-    .WithExternalHttpEndpoints();
+    .WithExternalHttpEndpoints()
+    .WithUrls(context =>
+    {
+        if (context.GetEndpoint(Topology.HttpEndpointName) is { } endpoint)
+        {
+            context.Urls.Add(
+                new ResourceUrlAnnotation
+                {
+                    Url = $"{endpoint.Url}{Topology.ApiDocsPath}",
+                    DisplayText = "API docs (Scalar)",
+                }
+            );
+        }
+    });
 
 #pragma warning disable ASPIREMCP001
 var mcp = builder

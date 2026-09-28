@@ -22,6 +22,7 @@
       Version="1.22.0-alpha.260918.1"
     />
     <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.17.10" />
   </ItemGroup>
 
   <ItemGroup>

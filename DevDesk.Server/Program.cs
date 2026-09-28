@@ -1,7 +1,7 @@
 using DevDesk.Server.Features.Chat;
 using DevDesk.Server.Features.Tickets;
 using FluentValidation;
-using Npgsql;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +26,7 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(options => options.WithTitle("DevDesk API"));
 }
 
 app.MapTicketsEndpoints();

@@ -3,6 +3,8 @@ namespace DevDesk.AppHost;
 public static class Topology
 {
     public const string HealthCheckPath = "/health";
+    public const string ApiDocsPath = "/scalar";
+    public const string HttpEndpointName = "http";
 
     public const string DocsDirectory = "../docs";
     public const string DocsPathEnvironmentVariable = "DOCS_PATH";

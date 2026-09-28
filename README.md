@@ -39,6 +39,7 @@ Wait until `mcp`, `server` and `webfrontend` are healthy and `migrations` and `i
 | Agent debugging (DevUI) | the `devui` URL in the dashboard, ending in `/devui/` |
 | Traces, metrics, logs | the Aspire dashboard, and Grafana at http://localhost:3000 |
 | Ticket API | `http://localhost:5480/api/tickets`, OpenAPI at `/openapi/v1.json` |
+| API docs (Scalar) | the **API docs (Scalar)** link on `server` in the dashboard, or `http://localhost:5480/scalar` |
 
 ## Try it
 
