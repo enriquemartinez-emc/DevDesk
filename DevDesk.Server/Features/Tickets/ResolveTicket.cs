@@ -29,7 +29,8 @@ public static class ResolveTicketEndpoint
         ResolveTicketRequest request,
         NpgsqlDataSource dataSource,
         TimeProvider time,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
@@ -43,14 +44,16 @@ public static class ResolveTicketEndpoint
             """;
 
         var row = await connection.QuerySingleOrDefaultAsync<DbTicketRow>(
-            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct));
+            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct)
+        );
 
         if (row is null)
         {
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 title: "Ticket not found.",
-                detail: $"Ticket '{id}' does not exist.");
+                detail: $"Ticket '{id}' does not exist."
+            );
         }
 
         if (row.ToDomain() is not InProgressTicket inProgress)
@@ -58,7 +61,8 @@ public static class ResolveTicketEndpoint
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ticket cannot be resolved.",
-                detail: "Only in-progress tickets can be resolved.");
+                detail: "Only in-progress tickets can be resolved."
+            );
         }
 
         var resolved = TicketRules.Resolve(inProgress, request.ResolutionNote, time.GetUtcNow());
@@ -69,16 +73,19 @@ public static class ResolveTicketEndpoint
             where id = @Id
             """;
 
-        await connection.ExecuteAsync(new CommandDefinition(
-            updateSql,
-            new
-            {
-                Id = resolved.Id.Value,
-                Status = "resolved",
-                resolved.ResolutionNote,
-                resolved.ResolvedAt,
-            },
-            cancellationToken: ct));
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                updateSql,
+                new
+                {
+                    Id = resolved.Id.Value,
+                    Status = "resolved",
+                    resolved.ResolutionNote,
+                    resolved.ResolvedAt,
+                },
+                cancellationToken: ct
+            )
+        );
 
         return TypedResults.Ok(TicketResponses.FromDomain(resolved));
     }
@@ -100,18 +107,48 @@ file sealed record DbTicketRow
     public DateTime? ResolvedAt { get; init; }
     public DateTime? ClosedAt { get; init; }
 
-    public Ticket ToDomain() => Status switch
-    {
-        "open" => new OpenTicket(new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt)),
-        "in_progress" => new InProgressTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value)),
-        "resolved" => new ResolvedTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value), ResolutionNote!, new DateTimeOffset(ResolvedAt!.Value)),
-        "closed" => new ClosedTicket(
-            new TicketId(Id), Subject, Description, new RequesterId(RequesterId), new DateTimeOffset(CreatedAt),
-            new AgentId(AssignedAgent!.Value), new DateTimeOffset(AssignedAt!.Value), ResolutionNote!, new DateTimeOffset(ResolvedAt!.Value), new DateTimeOffset(ClosedAt!.Value)),
-        _ => throw new InvalidOperationException($"Unsupported ticket status '{Status}'."),
-    };
+    public Ticket ToDomain() =>
+        Status switch
+        {
+            "open" => new OpenTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt)
+            ),
+            "in_progress" => new InProgressTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value)
+            ),
+            "resolved" => new ResolvedTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value),
+                ResolutionNote!,
+                new DateTimeOffset(ResolvedAt!.Value)
+            ),
+            "closed" => new ClosedTicket(
+                new TicketId(Id),
+                Subject,
+                Description,
+                new RequesterId(RequesterId),
+                new DateTimeOffset(CreatedAt),
+                new AgentId(AssignedAgent!.Value),
+                new DateTimeOffset(AssignedAt!.Value),
+                ResolutionNote!,
+                new DateTimeOffset(ResolvedAt!.Value),
+                new DateTimeOffset(ClosedAt!.Value)
+            ),
+            _ => throw new InvalidOperationException($"Unsupported ticket status '{Status}'."),
+        };
 }

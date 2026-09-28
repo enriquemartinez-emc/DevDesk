@@ -37,7 +37,11 @@ public class TicketRulesTests
         var open = TicketRules.Create(Id, "Can't log in", "2FA reset needed", Requester, Now);
         var inProgress = TicketRules.Assign(open, Agent, Now.AddMinutes(5));
 
-        var resolved = TicketRules.Resolve(inProgress, "Reset via admin console", Now.AddMinutes(10));
+        var resolved = TicketRules.Resolve(
+            inProgress,
+            "Reset via admin console",
+            Now.AddMinutes(10)
+        );
         var closed = TicketRules.Close(resolved, Now.AddMinutes(15));
 
         Assert.Equal("Reset via admin console", closed.ResolutionNote);
@@ -50,7 +54,11 @@ public class TicketRulesTests
     {
         var open = TicketRules.Create(Id, "Can't log in", "2FA reset needed", Requester, Now);
         var inProgress = TicketRules.Assign(open, Agent, Now.AddMinutes(5));
-        var resolved = TicketRules.Resolve(inProgress, "Reset via admin console", Now.AddMinutes(10));
+        var resolved = TicketRules.Resolve(
+            inProgress,
+            "Reset via admin console",
+            Now.AddMinutes(10)
+        );
         var closed = TicketRules.Close(resolved, Now.AddMinutes(15));
 
         var reopened = TicketRules.Reopen(closed, Now.AddDays(1));

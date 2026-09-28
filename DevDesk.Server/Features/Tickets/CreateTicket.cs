@@ -22,22 +22,22 @@ public class CreateTicketValidator : AbstractValidator<CreateTicketRequest>
 public static class CreateTicketEndpoint
 {
     public static void MapCreateTicketEndpoint(this IEndpointRouteBuilder app) =>
-        app.MapPost("/", Handle)
-            .WithValidation<CreateTicketRequest>()
-            .WithName("CreateTicket");
+        app.MapPost("/", Handle).WithValidation<CreateTicketRequest>().WithName("CreateTicket");
 
     private static async Task<Results<CreatedAtRoute<TicketResponse>, ProblemHttpResult>> Handle(
         CreateTicketRequest request,
         NpgsqlDataSource dataSource,
         TimeProvider time,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var ticket = TicketRules.Create(
             new TicketId(Guid.NewGuid()),
             request.Subject,
             request.Description,
             new RequesterId(request.RequesterId),
-            time.GetUtcNow());
+            time.GetUtcNow()
+        );
 
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
@@ -46,18 +46,21 @@ public static class CreateTicketEndpoint
             values (@Id, @Subject, @Description, @RequesterId, @CreatedAt, @Status)
             """;
 
-        await connection.ExecuteAsync(new CommandDefinition(
-            insertSql,
-            new
-            {
-                Id = ticket.Id.Value,
-                ticket.Subject,
-                ticket.Description,
-                RequesterId = ticket.Requester.Value,
-                ticket.CreatedAt,
-                Status = "open",
-            },
-            cancellationToken: ct));
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                insertSql,
+                new
+                {
+                    Id = ticket.Id.Value,
+                    ticket.Subject,
+                    ticket.Description,
+                    RequesterId = ticket.Requester.Value,
+                    ticket.CreatedAt,
+                    Status = "open",
+                },
+                cancellationToken: ct
+            )
+        );
 
         var response = TicketResponses.FromDomain(ticket);
         return TypedResults.CreatedAtRoute(response, "GetTicket", new { id = response.Id });

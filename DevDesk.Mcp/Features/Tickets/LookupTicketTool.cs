@@ -7,11 +7,17 @@ namespace DevDesk.Mcp.Features.Tickets;
 [McpServerToolType]
 public static class LookupTicketTool
 {
-    [McpServerTool, Description("Look up a support ticket by id and return its current status, assignment, and resolution details.")]
+    [
+        McpServerTool,
+        Description(
+            "Look up a support ticket by id and return its current status, assignment, and resolution details."
+        )
+    ]
     public static async Task<string> LookupTicket(
         [Description("The ticket's id (GUID)")] Guid ticketId,
         TicketsApiClient client,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var ticket = await client.GetTicketAsync(ticketId, cancellationToken);
         if (ticket is null)
@@ -21,10 +27,14 @@ public static class LookupTicketTool
 
         return ticket.Status switch
         {
-            "open" => $"Ticket {ticket.Id} ('{ticket.Subject}') is open and not yet assigned. Created {ticket.CreatedAt:u}.",
-            "in_progress" => $"Ticket {ticket.Id} ('{ticket.Subject}') is in progress, assigned to agent {ticket.AssignedAgent} since {ticket.AssignedAt:u}.",
-            "resolved" => $"Ticket {ticket.Id} ('{ticket.Subject}') was resolved at {ticket.ResolvedAt:u} by agent {ticket.AssignedAgent}. Resolution: {ticket.ResolutionNote}",
-            "closed" => $"Ticket {ticket.Id} ('{ticket.Subject}') is closed (closed at {ticket.ClosedAt:u}). Resolution: {ticket.ResolutionNote}",
+            "open" =>
+                $"Ticket {ticket.Id} ('{ticket.Subject}') is open and not yet assigned. Created {ticket.CreatedAt:u}.",
+            "in_progress" =>
+                $"Ticket {ticket.Id} ('{ticket.Subject}') is in progress, assigned to agent {ticket.AssignedAgent} since {ticket.AssignedAt:u}.",
+            "resolved" =>
+                $"Ticket {ticket.Id} ('{ticket.Subject}') was resolved at {ticket.ResolvedAt:u} by agent {ticket.AssignedAgent}. Resolution: {ticket.ResolutionNote}",
+            "closed" =>
+                $"Ticket {ticket.Id} ('{ticket.Subject}') is closed (closed at {ticket.ClosedAt:u}). Resolution: {ticket.ResolutionNote}",
             _ => $"Ticket {ticket.Id} has an unrecognized status '{ticket.Status}'.",
         };
     }

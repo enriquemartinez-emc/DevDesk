@@ -7,13 +7,13 @@ namespace DevDesk.Server.Features.Tickets;
 public static class GetTicketEndpoint
 {
     public static void MapGetTicketEndpoint(this IEndpointRouteBuilder app) =>
-        app.MapGet("/{id:guid}", Handle)
-            .WithName("GetTicket");
+        app.MapGet("/{id:guid}", Handle).WithName("GetTicket");
 
     private static async Task<Results<Ok<TicketResponse>, NotFound>> Handle(
         Guid id,
         NpgsqlDataSource dataSource,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
@@ -27,11 +27,10 @@ public static class GetTicketEndpoint
             """;
 
         var row = await connection.QuerySingleOrDefaultAsync<DbTicketRow>(
-            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct));
+            new CommandDefinition(selectSql, new { Id = id }, cancellationToken: ct)
+        );
 
-        return row is null
-            ? TypedResults.NotFound()
-            : TypedResults.Ok(row.ToResponse());
+        return row is null ? TypedResults.NotFound() : TypedResults.Ok(row.ToResponse());
     }
 }
 
@@ -51,11 +50,18 @@ file sealed record DbTicketRow
     public DateTime? ResolvedAt { get; init; }
     public DateTime? ClosedAt { get; init; }
 
-    public TicketResponse ToResponse() => new(
-        Id, Subject, Description, RequesterId, new DateTimeOffset(CreatedAt), Status,
-        AssignedAgent,
-        AssignedAt is { } assignedAt ? new DateTimeOffset(assignedAt) : null,
-        ResolutionNote,
-        ResolvedAt is { } resolvedAt ? new DateTimeOffset(resolvedAt) : null,
-        ClosedAt is { } closedAt ? new DateTimeOffset(closedAt) : null);
+    public TicketResponse ToResponse() =>
+        new(
+            Id,
+            Subject,
+            Description,
+            RequesterId,
+            new DateTimeOffset(CreatedAt),
+            Status,
+            AssignedAgent,
+            AssignedAt is { } assignedAt ? new DateTimeOffset(assignedAt) : null,
+            ResolutionNote,
+            ResolvedAt is { } resolvedAt ? new DateTimeOffset(resolvedAt) : null,
+            ClosedAt is { } closedAt ? new DateTimeOffset(closedAt) : null
+        );
 }

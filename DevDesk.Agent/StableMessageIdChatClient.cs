@@ -10,11 +10,14 @@ public sealed class StableMessageIdChatClient(IChatClient inner) : DelegatingCha
     public override async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages,
         ChatOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         var turnMessageId = Guid.NewGuid().ToString("N");
 
-        await foreach (var update in base.GetStreamingResponseAsync(messages, options, cancellationToken))
+        await foreach (
+            var update in base.GetStreamingResponseAsync(messages, options, cancellationToken)
+        )
         {
             update.MessageId ??= turnMessageId;
             yield return update;

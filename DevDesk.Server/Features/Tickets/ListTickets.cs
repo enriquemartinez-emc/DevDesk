@@ -10,12 +10,12 @@ public static class ListTicketsEndpoint
     private const int MaxResults = 100;
 
     public static void MapListTicketsEndpoint(this IEndpointRouteBuilder app) =>
-        app.MapGet("/", Handle)
-            .WithName("ListTickets");
+        app.MapGet("/", Handle).WithName("ListTickets");
 
     private static async Task<Ok<IReadOnlyList<TicketResponse>>> Handle(
         NpgsqlDataSource dataSource,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
@@ -30,7 +30,8 @@ public static class ListTicketsEndpoint
             """;
 
         var rows = await connection.QueryAsync<DbTicketRow>(
-            new CommandDefinition(selectSql, new { MaxResults }, cancellationToken: ct));
+            new CommandDefinition(selectSql, new { MaxResults }, cancellationToken: ct)
+        );
 
         var response = rows.Select(row => row.ToResponse()).ToList();
         return TypedResults.Ok<IReadOnlyList<TicketResponse>>(response);
@@ -53,11 +54,18 @@ file sealed record DbTicketRow
     public DateTime? ResolvedAt { get; init; }
     public DateTime? ClosedAt { get; init; }
 
-    public TicketResponse ToResponse() => new(
-        Id, Subject, Description, RequesterId, new DateTimeOffset(CreatedAt), Status,
-        AssignedAgent,
-        AssignedAt is { } assignedAt ? new DateTimeOffset(assignedAt) : null,
-        ResolutionNote,
-        ResolvedAt is { } resolvedAt ? new DateTimeOffset(resolvedAt) : null,
-        ClosedAt is { } closedAt ? new DateTimeOffset(closedAt) : null);
+    public TicketResponse ToResponse() =>
+        new(
+            Id,
+            Subject,
+            Description,
+            RequesterId,
+            new DateTimeOffset(CreatedAt),
+            Status,
+            AssignedAgent,
+            AssignedAt is { } assignedAt ? new DateTimeOffset(assignedAt) : null,
+            ResolutionNote,
+            ResolvedAt is { } resolvedAt ? new DateTimeOffset(resolvedAt) : null,
+            ClosedAt is { } closedAt ? new DateTimeOffset(closedAt) : null
+        );
 }

@@ -11,7 +11,12 @@ public static class RunbooksSchema
     {
         await using var connection = await dataSource.OpenConnectionAsync(ct);
 
-        await using (var extensionCommand = new NpgsqlCommand("create extension if not exists vector", connection))
+        await using (
+            var extensionCommand = new NpgsqlCommand(
+                "create extension if not exists vector",
+                connection
+            )
+        )
         {
             await extensionCommand.ExecuteNonQueryAsync(ct);
         }

@@ -29,4 +29,5 @@ public sealed record TicketDto(
     DateTimeOffset? AssignedAt,
     string? ResolutionNote,
     DateTimeOffset? ResolvedAt,
-    DateTimeOffset? ClosedAt);
+    DateTimeOffset? ClosedAt
+);

@@ -11,7 +11,8 @@ public sealed class RunbookIngestor(
     BlobServiceClient blobService,
     NpgsqlDataSource dataSource,
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-    ILogger<RunbookIngestor> logger)
+    ILogger<RunbookIngestor> logger
+)
 {
     private const string ContainerName = "runbooks";
 
@@ -31,35 +32,43 @@ public sealed class RunbookIngestor(
 
         await foreach (var blob in container.GetBlobsAsync(cancellationToken: ct))
         {
-            var content = (await container.GetBlobClient(blob.Name).DownloadContentAsync(ct)).Value.Content.ToString();
+            var content = (
+                await container.GetBlobClient(blob.Name).DownloadContentAsync(ct)
+            ).Value.Content.ToString();
             var chunks = RunbookChunker.Chunk(content);
             var embeddings = await embeddingGenerator.GenerateAsync(chunks, cancellationToken: ct);
 
             await using var transaction = await connection.BeginTransactionAsync(ct);
 
-            await connection.ExecuteAsync(new CommandDefinition(
-                "delete from doc_chunks where source_path = @SourcePath",
-                new { SourcePath = blob.Name },
-                transaction,
-                cancellationToken: ct));
+            await connection.ExecuteAsync(
+                new CommandDefinition(
+                    "delete from doc_chunks where source_path = @SourcePath",
+                    new { SourcePath = blob.Name },
+                    transaction,
+                    cancellationToken: ct
+                )
+            );
 
             for (var i = 0; i < chunks.Count; i++)
             {
-                await connection.ExecuteAsync(new CommandDefinition(
-                    """
-                    insert into doc_chunks (id, source_path, chunk_index, content, embedding)
-                    values (@Id, @SourcePath, @ChunkIndex, @Content, @Embedding::vector)
-                    """,
-                    new
-                    {
-                        Id = Guid.NewGuid(),
-                        SourcePath = blob.Name,
-                        ChunkIndex = i,
-                        Content = chunks[i],
-                        Embedding = ToVectorLiteral(embeddings[i].Vector.Span),
-                    },
-                    transaction,
-                    cancellationToken: ct));
+                await connection.ExecuteAsync(
+                    new CommandDefinition(
+                        """
+                        insert into doc_chunks (id, source_path, chunk_index, content, embedding)
+                        values (@Id, @SourcePath, @ChunkIndex, @Content, @Embedding::vector)
+                        """,
+                        new
+                        {
+                            Id = Guid.NewGuid(),
+                            SourcePath = blob.Name,
+                            ChunkIndex = i,
+                            Content = chunks[i],
+                            Embedding = ToVectorLiteral(embeddings[i].Vector.Span),
+                        },
+                        transaction,
+                        cancellationToken: ct
+                    )
+                );
             }
 
             await transaction.CommitAsync(ct);

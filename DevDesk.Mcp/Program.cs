@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddMcpServer()
+builder
+    .Services.AddMcpServer()
     .WithHttpTransport(options => options.Stateless = true)
     .WithToolsFromAssembly();
 
@@ -20,7 +21,10 @@ builder.Services.AddHttpClient<TicketsApiClient>(client =>
 
 var app = builder.Build();
 
-await RunbooksSchema.EnsureCreatedAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), CancellationToken.None);
+await RunbooksSchema.EnsureCreatedAsync(
+    app.Services.GetRequiredService<NpgsqlDataSource>(),
+    CancellationToken.None
+);
 
 app.MapDefaultEndpoints();
 app.MapMcp();
