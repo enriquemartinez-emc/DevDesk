@@ -1,3 +1,4 @@
+using AGUI.Abstractions;
 using DevDesk.Agent;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
@@ -11,6 +12,12 @@ builder.AddServiceDefaults();
 builder.AddOllamaApiClient("ollama-llama3-2").AddChatClient();
 
 builder.Services.AddAGUIServer();
+
+// The hosting package composes the AG-UI JSON context into ASP.NET's options in a way that drops the
+// SDK's omit-nulls rule, so events carry "timestamp":null etc. and spec-conformant clients (the
+// TypeScript AG-UI client) reject them. AGUIJsonUtilities.DefaultTypeInfoResolver carries the rule.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AGUIJsonUtilities.DefaultTypeInfoResolver));
 
 var app = builder.Build();
 
