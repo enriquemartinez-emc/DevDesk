@@ -79,6 +79,13 @@ var agent = builder
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
+// DevUI: an in-process aggregator (no container) for stepping through agent conversations and
+// tool calls. It talks to the agent's OpenAI Responses/Conversations endpoints.
+_ = builder
+    .AddDevUI(ResourceNames.DevUI)
+    .WithAgentService(agent, agents: [new(ResourceNames.SupportAgent)])
+    .WaitFor(agent);
+
 // DevDesk.Ingestion is a one-shot job: it uploads docs/*.md to blob storage, then chunks, embeds
 // and writes them to doc_chunks. It waits for mcp because DevDesk.Mcp creates the doc_chunks table.
 var ingestion = builder

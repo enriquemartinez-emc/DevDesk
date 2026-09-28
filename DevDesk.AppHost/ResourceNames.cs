@@ -16,5 +16,9 @@ public static class ResourceNames
     public const string Mcp = "mcp";
     public const string Agent = "agent";
     public const string Ingestion = "ingestion";
+    public const string DevUI = "devui";
+
+    // The AIAgent name registered in DevDesk.Agent/Program.cs (AddAIAgent); DevUI lists agents by it.
+    public const string SupportAgent = "devdesk-support-agent";
     public const string WebFrontend = "webfrontend";
 }
