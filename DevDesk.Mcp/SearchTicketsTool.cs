@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Dapper;
+using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
 using Npgsql;
 
@@ -8,10 +9,8 @@ namespace DevDesk.Mcp;
 [McpServerToolType]
 public static class SearchTicketsTool
 {
-    private const int MaxResults = 5;
-
     [
-        McpServerTool,
+        McpServerTool(Name = ToolNames.SearchTickets),
         Description(
             "Search existing tickets, of any status, for similar problems, including how resolved ones were fixed. "
                 + "Use it for \"has this come up before?\" and \"what fixed it last time?\" questions."
@@ -21,6 +20,7 @@ public static class SearchTicketsTool
         [Description("Keywords describing the problem, e.g. \"vpn disconnects every hour\"")]
             string query,
         NpgsqlDataSource dataSource,
+        IOptions<SearchOptions> options,
         CancellationToken cancellationToken
     )
     {
@@ -54,7 +54,7 @@ public static class SearchTicketsTool
             await connection.QueryAsync<TicketRow>(
                 new CommandDefinition(
                     searchSql,
-                    new { Query = query, MaxResults },
+                    new { Query = query, MaxResults = options.Value.TicketResults },
                     cancellationToken: cancellationToken
                 )
             )

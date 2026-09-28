@@ -1,5 +1,6 @@
 using AGUI.Abstractions;
 using DevDesk.Server.Features.Chat.Agent;
+using DevDesk.ServiceDefaults;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
@@ -12,13 +13,14 @@ public static class SupportChat
 {
     // Must match ResourceNames.SupportAgent in the AppHost: DevUI lists agents by this name.
     private const string AgentName = "devdesk-support-agent";
+    private const string AgUiRoute = "/agui";
 
     public static WebApplicationBuilder AddSupportChat(
         this WebApplicationBuilder builder,
         McpConnection mcp
     )
     {
-        builder.AddOllamaApiClient("ollama-llama3-2").AddChatClient();
+        builder.AddOllamaApiClient(ServiceResources.ChatModel).AddChatClient();
 
         builder.Services.AddAGUIServer();
 
@@ -50,7 +52,7 @@ public static class SupportChat
 
     public static WebApplication MapSupportChat(this WebApplication app)
     {
-        app.MapAGUIServer("/agui", app.Services.GetRequiredKeyedService<AIAgent>(AgentName));
+        app.MapAGUIServer(AgUiRoute, app.Services.GetRequiredKeyedService<AIAgent>(AgentName));
         app.MapOpenAIResponses();
         app.MapOpenAIConversations();
 

@@ -1,19 +1,18 @@
 using Dapper;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace DevDesk.Server.Features.Tickets;
 
 public static class ListTicketsEndpoint
 {
-    // Simple recency cap for now; revisit with real paging once a client needs to page through history.
-    private const int MaxResults = 100;
-
     public static void MapListTicketsEndpoint(this IEndpointRouteBuilder app) =>
         app.MapGet("/", Handle).WithName("ListTickets");
 
     private static async Task<Ok<IReadOnlyList<TicketResponse>>> Handle(
         NpgsqlDataSource dataSource,
+        IOptions<TicketsOptions> options,
         CancellationToken ct
     )
     {
@@ -38,7 +37,11 @@ public static class ListTicketsEndpoint
             """;
 
         var rows = await connection.QueryAsync<DbTicketRow>(
-            new CommandDefinition(selectSql, new { MaxResults }, cancellationToken: ct)
+            new CommandDefinition(
+                selectSql,
+                new { MaxResults = options.Value.MaxListResults },
+                cancellationToken: ct
+            )
         );
 
         var response = rows.Select(row => row.ToResponse()).ToList();

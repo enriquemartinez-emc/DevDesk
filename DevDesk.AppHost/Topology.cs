@@ -7,7 +7,9 @@ public static class Topology
     public const string HttpEndpointName = "http";
 
     public const string DocsDirectory = "../docs";
-    public const string DocsPathEnvironmentVariable = "DOCS_PATH";
+
+    // The environment-variable form of the Ingestion:DocsPath configuration key.
+    public const string DocsPathEnvironmentVariable = "Ingestion__DocsPath";
 
     // Read by DevDesk.ServiceDefaults to also export telemetry to grafana-lgtm.
     public const string GrafanaOtlpEnvironmentVariable = "GRAFANA_OTLP_ENDPOINT";

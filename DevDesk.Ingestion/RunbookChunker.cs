@@ -4,11 +4,9 @@ namespace DevDesk.Ingestion;
 
 public static class RunbookChunker
 {
-    private const int MaxChunkCharacters = 1200;
-
     // One chunk per "## " section, prefixed with the document title so a chunk stands on its own.
     // Sections longer than the limit are split on paragraph boundaries.
-    public static IReadOnlyList<string> Chunk(string markdown)
+    public static IReadOnlyList<string> Chunk(string markdown, int maxChunkCharacters)
     {
         var title = string.Empty;
         var heading = string.Empty;
@@ -25,7 +23,7 @@ public static class RunbookChunker
             }
 
             var prefix = heading.Length == 0 ? title : $"{title} - {heading}";
-            foreach (var piece in SplitOnParagraphs(text))
+            foreach (var piece in SplitOnParagraphs(text, maxChunkCharacters))
             {
                 chunks.Add($"{prefix}\n{piece}");
             }
@@ -52,12 +50,12 @@ public static class RunbookChunker
         return chunks;
     }
 
-    private static IEnumerable<string> SplitOnParagraphs(string text)
+    private static IEnumerable<string> SplitOnParagraphs(string text, int maxChunkCharacters)
     {
         var current = new StringBuilder();
         foreach (var paragraph in text.Split("\n\n", StringSplitOptions.RemoveEmptyEntries))
         {
-            if (current.Length > 0 && current.Length + paragraph.Length > MaxChunkCharacters)
+            if (current.Length > 0 && current.Length + paragraph.Length > maxChunkCharacters)
             {
                 yield return current.ToString().Trim();
                 current.Clear();

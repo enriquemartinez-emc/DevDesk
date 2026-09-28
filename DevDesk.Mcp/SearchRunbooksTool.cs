@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Dapper;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
 using Npgsql;
 
@@ -10,10 +11,8 @@ namespace DevDesk.Mcp;
 [McpServerToolType]
 public static class SearchRunbooksTool
 {
-    private const int TopK = 5;
-
     [
-        McpServerTool,
+        McpServerTool(Name = ToolNames.SearchRunbooks),
         Description(
             "Search the runbook knowledge base for passages relevant to a query, using vector similarity over ingested runbook chunks."
         )
@@ -22,6 +21,7 @@ public static class SearchRunbooksTool
         [Description("What to search for, e.g. \"how to reset a customer's 2FA\"")] string query,
         IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
         NpgsqlDataSource dataSource,
+        IOptions<SearchOptions> options,
         CancellationToken cancellationToken
     )
     {
@@ -47,7 +47,7 @@ public static class SearchRunbooksTool
             await connection.QueryAsync<DbRunbookMatch>(
                 new CommandDefinition(
                     searchSql,
-                    new { QueryEmbedding = vectorLiteral, TopK },
+                    new { QueryEmbedding = vectorLiteral, TopK = options.Value.RunbookResults },
                     cancellationToken: cancellationToken
                 )
             )

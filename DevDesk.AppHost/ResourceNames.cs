@@ -9,6 +9,8 @@ public static class ResourceNames
     public const string RunbooksBlobs = "runbooks";
 
     public const string Ollama = "ollama";
+    public const string ChatModel = "chat-model";
+    public const string EmbeddingModel = "embedding-model";
 
     public const string Observability = "grafana-lgtm";
 

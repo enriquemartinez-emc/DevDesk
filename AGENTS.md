@@ -60,7 +60,8 @@ DevDesk/
 ├── .editorconfig                 # formatting basics + dead-code analyzers (unused usings/members) as warnings
 ├── DevDesk.AppHost/              # orchestrator — AppHost.cs plus ResourceNames.cs, ContainerImages.cs,
 │                                  # ModelNames.cs, Topology.cs constants, no other logic
-├── DevDesk.ServiceDefaults/      # shared OpenTelemetry, health checks, service discovery, resilience
+├── DevDesk.ServiceDefaults/      # shared OpenTelemetry, health checks, service discovery, resilience;
+│                                  # ServiceResources (resource names as services see them), AddValidatedOptions
 ├── DevDesk.Server.Core/          # domain logic — zero I/O references, ever
 │   └── Features/
 │       └── Tickets/
@@ -79,7 +80,7 @@ DevDesk/
 ├── DevDesk.Mcp/                  # MCP server, flat (no Features/ folders): one file per tool, TicketRow.cs,
 │                                  # tools query Postgres directly with Dapper
 ├── DevDesk.Migrations/           # one-shot job: DbUp applies Scripts/NNNN_*.sql (embedded resources), in name order
-├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks
+├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks (IngestionOptions)
 ├── frontend/                     # React + Vite + shadcn/ui
 │   ├── openapi/                  # committed OpenAPI document the API client is generated from
 │   └── src/{api,features,components,lib}   # api/ is generated; features/ hold hooks + components
@@ -95,8 +96,8 @@ New backend features put pure decisions in `Features/{FeatureName}/Core.cs` in `
 Things that cost time once and aren't obvious from the code:
 
 - **Postgres 18 data volume**: `WithDataVolume()` picks the container data directory from the image tag at call time, and the pgvector tag doesn't parse as 18+. Call it *before* `WithImage(...)`.
-- **Slow local models**: `ServiceDefaults` raises the standard resilience timeouts (3 min per attempt, 6 min total); the ~30s defaults cancelled Ollama chat calls mid-generation.
-- **Chat model**: `ModelNames.Chat` (`granite4:micro`, Apache-2.0, ~2 GB) replaced `llama3.2`, which answered from the search results worse and routed some research questions wrongly. Skip reasoning models such as `qwen3`: their "thinking" tokens stream into the chat and are slow on CPU. After changing the model or the classifier prompt, ask a research, a lookup and a greeting question.
+- **Slow local models**: `ServiceDefaults` raises the standard resilience timeouts (`ResilienceOptions`: 3 min per attempt, 6 min total, overridable in the `Resilience` config section); the ~30s defaults cancelled Ollama chat calls mid-generation.
+- **Chat model**: `ModelNames.Chat` (`granite4:micro`, Apache-2.0, ~2 GB) is the only place the model is named; the chat model's resource name (`ResourceNames.ChatModel`) is stable, so swapping models needs no other change. It replaced `llama3.2`, which answered from the search results worse and routed some research questions wrongly. Skip reasoning models such as `qwen3`: their "thinking" tokens stream into the chat and are slow on CPU. After changing the model or the classifier prompt, ask a research, a lookup and a greeting question.
 - **MCP endpoint**: the MCP client transport needs a concrete `http(s)` URL and rejects Aspire's `https+http://` scheme, so `McpConnection` in `DevDesk.Server` reads `services:mcp:*` configuration.
 - **AG-UI nulls**: the Agent Framework hosting package loses the AG-UI SDK's omit-nulls rule on net10, and the TypeScript client rejects `null` fields. `SupportChat` inserts `AGUIJsonUtilities.DefaultTypeInfoResolver` into the JSON options; keep it (it only answers for AG-UI types, so the ticket API's JSON is unaffected).
 - **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.
@@ -142,6 +143,8 @@ Things that cost time once and aren't obvious from the code:
 - **No browser end-to-end tests without approval.** Don't drive the app with `playwright-cli` (or any other browser automation) unless the user explicitly says to. Until then, make frontend changes and verify them with the type check, lint, and build only.
 - **SQL: one column per line.** In every query, put each `select` column, each `insert` column and value, and each `update … set` assignment on its own line.
 - **Comments explain why, not what.** Keep a comment only when the code can't show the reason (a workaround, a gotcha, a business rule); the code should be enough to follow the logic.
+- **No hard-coded values.** Aspire resource names live in `DevDesk.ServiceDefaults/ServiceResources.cs` (mirroring the AppHost's `ResourceNames`); tunables such as limits, sizes and timeouts are validated options bound from `appsettings.json` (`AddValidatedOptions`, so a missing value fails at startup); routes, tool names and other names are named constants. NuGet versions go only in `Directory.Packages.props`, shared project properties only in `Directory.Build.props`.
+- **Remove what isn't used.** The build reports unused usings and private members as warnings; keep it at zero. Vendored shadcn and AI Elements files keep their full API, so don't prune their exports.
 - **Format C# after every change.** Whenever you change a `.cs` file or a related C# file, run `dotnet csharpier format .` from the repo root before finishing.
 - **Format React after every change.** Whenever you change frontend code, run `npm run format` (Prettier) in `frontend/` before finishing. Generated and vendored files (`src/api`, `src/components/ui`, `src/components/ai-elements`, `src/index.css`, `src/lib/utils.ts`) are excluded in `frontend/.prettierignore`; don't reformat them by hand.
 

@@ -23,8 +23,8 @@ var ollama = builder
     .WithLifetime(ContainerLifetime.Persistent)
     .WithDataVolume();
 
-var chatModel = ollama.AddModel(ModelNames.Chat);
-var embeddingModel = ollama.AddModel(ModelNames.Embedding);
+var chatModel = ollama.AddModel(ResourceNames.ChatModel, ModelNames.Chat);
+var embeddingModel = ollama.AddModel(ResourceNames.EmbeddingModel, ModelNames.Embedding);
 
 var observability = builder
     .AddContainer(
