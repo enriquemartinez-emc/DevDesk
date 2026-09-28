@@ -3,9 +3,6 @@ using Microsoft.Extensions.AI;
 
 namespace DevDesk.Server.Features.Chat.Agent;
 
-//   classify ─ Research ─────► research (ticket history ∥ runbooks) ──► synthesis
-//            ├ TicketLookup ─► lookup agent (lookup_ticket)
-//            └ Conversation ─► conversation agent (no tools)
 public static class SupportWorkflow
 {
     public static Workflow Build(IChatClient chatClient, McpConnection mcp)

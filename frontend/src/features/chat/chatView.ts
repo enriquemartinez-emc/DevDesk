@@ -28,8 +28,6 @@ function contentText(content: unknown): string {
   return '';
 }
 
-// Turns the AG-UI message list into what the UI shows: tool results are folded into the
-// assistant message that made the call, and empty assistant turns are dropped.
 export function toChatItems(messages: Message[]): ChatItem[] {
   const toolResults = new Map<string, string>();
   for (const message of messages) {

@@ -7,8 +7,7 @@ export const ticketActionLabels: Record<TicketAction, string> = {
   reopen: 'Reopen',
 };
 
-// Mirrors the lifecycle in DevDesk.Server.Core (TicketRules) so the UI only offers legal moves.
-// The server still enforces it and answers 409 for anything else.
+// Mirrors DevDesk.Server.Core's TicketRules so the UI only offers legal moves; the server still enforces it (409 otherwise).
 const actionsByStatus: Record<string, TicketAction[]> = {
   open: ['assign'],
   in_progress: ['resolve'],

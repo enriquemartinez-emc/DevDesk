@@ -13,8 +13,6 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
 
-// Common Aspire services for every service project: service discovery, resilience, health checks and
-// OpenTelemetry (exported to the Aspire dashboard and, when configured, to grafana-lgtm).
 public static class Extensions
 {
     private const string HealthEndpointPath = "/health";
@@ -89,7 +87,6 @@ public static class Extensions
                     .AddSource(builder.Environment.ApplicationName)
                     .AddSource(AiTelemetryNames)
                     .AddAspNetCoreInstrumentation(tracing =>
-                        // Exclude health check requests from tracing
                         tracing.Filter = context =>
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)
                             && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
@@ -111,8 +108,7 @@ public static class Extensions
 
         if (!string.IsNullOrWhiteSpace(grafanaEndpoint))
         {
-            // UseOtlpExporter() takes one destination, so register each signal's exporter explicitly:
-            // the Aspire dashboard (from the standard OTEL_* settings) and grafana-lgtm.
+            // UseOtlpExporter() takes one destination, so register the dashboard and grafana-lgtm exporters explicitly.
             void ConfigureGrafana(OtlpExporterOptions options)
             {
                 options.Endpoint = new Uri(grafanaEndpoint);
@@ -165,7 +161,6 @@ public static class Extensions
     {
         builder
             .Services.AddHealthChecks()
-            // Add a default liveness check to ensure app is responsive
             .AddCheck(SelfCheckName, () => HealthCheckResult.Healthy(), [LiveTag]);
 
         return builder;
@@ -173,14 +168,10 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        // Adding health checks endpoints to applications in non-development environments has security implications.
-        // See https://aka.ms/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
         {
-            // All health checks must pass for app to be considered ready to accept traffic after starting
             app.MapHealthChecks(HealthEndpointPath);
 
-            // Only health checks tagged with the "live" tag must pass for app to be considered alive
             app.MapHealthChecks(
                 AlivenessEndpointPath,
                 new HealthCheckOptions { Predicate = r => r.Tags.Contains(LiveTag) }

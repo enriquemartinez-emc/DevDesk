@@ -2,8 +2,7 @@ using DevDesk.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// WithDataVolume() picks the data directory from the image tag when it is called, and the pgvector
-// tag doesn't parse as Postgres 18+, so call it before WithImage().
+// WithDataVolume() picks the data directory from the image tag, and the pgvector tag doesn't parse as Postgres 18+, so call it before WithImage().
 var postgres = builder
     .AddPostgres(ResourceNames.Postgres)
     .WithLifetime(ContainerLifetime.Persistent)

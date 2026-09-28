@@ -29,8 +29,7 @@ export function useAgentChat() {
         },
       );
 
-      // A dropped connection ends the stream without RUN_FINISHED or RUN_ERROR; don't let that
-      // look like an empty successful answer.
+      // A dropped connection ends the stream with neither RUN_FINISHED nor RUN_ERROR; don't treat that as an empty successful answer.
       if (!finished) {
         throw new Error('The connection to the assistant closed before it finished. Try again.');
       }

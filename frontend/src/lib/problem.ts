@@ -6,8 +6,7 @@ const problemSchema = z.object({
   errors: z.record(z.string(), z.array(z.string())).nullish(),
 });
 
-// The generated client throws the whole response on a non-2xx status, with the parsed
-// ProblemDetails body on `.error` - not an Error.
+// The generated client throws the whole response on a non-2xx status, with the parsed ProblemDetails on `.error` - not an Error.
 const thrownResponseSchema = z.object({ error: problemSchema });
 
 export function problemMessage(error: unknown, fallback: string): string {

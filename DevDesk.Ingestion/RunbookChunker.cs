@@ -4,8 +4,6 @@ namespace DevDesk.Ingestion;
 
 public static class RunbookChunker
 {
-    // One chunk per "## " section, prefixed with the document title so a chunk stands on its own.
-    // Sections longer than the limit are split on paragraph boundaries.
     public static IReadOnlyList<string> Chunk(string markdown, int maxChunkCharacters)
     {
         var title = string.Empty;

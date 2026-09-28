@@ -159,8 +159,7 @@ public static class TicketRules
             closedAt
         );
 
-    // Reopening always returns the ticket to the same agent with the assignment clock restarted, and
-    // drops the resolution: it didn't hold, so it must not be recommended from ticket history any more.
+    // Drops the resolution on reopen: it didn't hold, so it must not be recommended from ticket history again.
     public static InProgressTicket Reopen(ResolvedTicket ticket, DateTimeOffset reopenedAt) =>
         new(
             ticket.Id,

@@ -26,8 +26,6 @@ export function useCreateTicket() {
   };
 }
 
-// One instance covers every lifecycle action so the list can disable its buttons and show a
-// single error while any of them is running.
 export function useTicketActions() {
   const assign = useTicketMutation((id: string) =>
     api.api.assignTicket({ id }, { agentId: CURRENT_AGENT_ID }),
