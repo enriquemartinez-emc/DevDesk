@@ -60,7 +60,9 @@ DevDesk/
 ├── DevDesk.Server.Core/          # domain logic — zero I/O references, ever
 │   └── Features/
 │       └── Tickets/
-│           └── Core.cs           # Ticket (closed hierarchy: Open/InProgress/Resolved/Closed) + TicketRules
+│           └── Core.cs           # Ticket (closed hierarchy: Open/InProgress/Resolved/Closed) + TicketRules:
+│                                  # each transition takes exactly the state it applies to; outcome types only
+│                                  # where a rule needs more than the state (AgentIsRequester, ReopenWindowElapsed)
 ├── DevDesk.Server.Core.Tests/    # unit tests against DevDesk.Server.Core, zero mocks, zero DB
 ├── DevDesk.Server/               # Minimal API
 │   ├── Common/                   # validation filter shared by endpoints
@@ -76,6 +78,8 @@ DevDesk/
 │   └── src/{api,features,components,lib}   # api/ is generated; features/ hold hooks + components
 └── docs/                         # sample runbooks, ingested into pgvector via Azurite
 ```
+
+`Core.cs` holds domain rules only; parsing or shaping request input for a query is shell work, not Core. Transitions take the exact source state (`Resolve(InProgressTicket)`), so an illegal call doesn't compile; the handler narrows the loaded row (`is InProgressTicket`) and answers 409 otherwise. Don't add a runtime state guard inside Core.
 
 New backend features put pure decisions in `Features/{FeatureName}/Core.cs` in `DevDesk.Server.Core` and everything with I/O in one use-case file per endpoint under `DevDesk.Server/Features/{FeatureName}/`, following `emc-fcis-feature-slice`. Don't add `Data` or `Mapper` classes, and don't put I/O in `Core.cs`.
 

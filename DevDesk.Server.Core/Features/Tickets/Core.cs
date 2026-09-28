@@ -75,9 +75,32 @@ public sealed record ClosedTicket(
     DateTimeOffset ClosedAt
 ) : Ticket(Id, Subject, Description, Requester, CreatedAt);
 
-// ---- Transitions (Rule 4, Rule 5: new() across different types) ----
+// ---- Outcomes: only where a rule depends on more than the ticket's state. Closed, like Ticket ----
+public abstract record AssignOutcome
+{
+    private protected AssignOutcome() { }
+}
+
+public sealed record Assigned(InProgressTicket Ticket) : AssignOutcome;
+
+public sealed record AgentIsRequester : AssignOutcome;
+
+public abstract record ReopenOutcome
+{
+    private protected ReopenOutcome() { }
+}
+
+public sealed record Reopened(InProgressTicket Ticket) : ReopenOutcome;
+
+public sealed record ReopenWindowElapsed(DateTimeOffset ExpiredAt) : ReopenOutcome;
+
+// ---- Transitions and decisions (Rule 4). Each takes exactly the state it applies to, so an illegal
+// call (resolving an open ticket, closing an in-progress one) does not compile ----
 public static class TicketRules
 {
+    // A closed ticket can still be reopened for this long; after that the customer opens a new one.
+    public static readonly TimeSpan ReopenWindow = TimeSpan.FromDays(14);
+
     public static OpenTicket Create(
         TicketId id,
         string subject,
@@ -86,20 +109,25 @@ public static class TicketRules
         DateTimeOffset createdAt
     ) => new(id, subject, description, requester, createdAt);
 
-    public static InProgressTicket Assign(
+    // Nobody works their own request.
+    public static AssignOutcome Assign(
         OpenTicket ticket,
         AgentId agent,
         DateTimeOffset assignedAt
     ) =>
-        new(
-            ticket.Id,
-            ticket.Subject,
-            ticket.Description,
-            ticket.Requester,
-            ticket.CreatedAt,
-            agent,
-            assignedAt
-        );
+        ticket.Requester.Value == agent.Value
+            ? new AgentIsRequester()
+            : new Assigned(
+                new InProgressTicket(
+                    ticket.Id,
+                    ticket.Subject,
+                    ticket.Description,
+                    ticket.Requester,
+                    ticket.CreatedAt,
+                    agent,
+                    assignedAt
+                )
+            );
 
     public static ResolvedTicket Resolve(
         InProgressTicket ticket,
@@ -132,6 +160,8 @@ public static class TicketRules
             closedAt
         );
 
+    // Reopening always returns the ticket to the same agent with the assignment clock restarted, and
+    // drops the resolution: it didn't hold, so it must not be recommended from ticket history any more.
     public static InProgressTicket Reopen(ResolvedTicket ticket, DateTimeOffset reopenedAt) =>
         new(
             ticket.Id,
@@ -143,14 +173,19 @@ public static class TicketRules
             reopenedAt
         );
 
-    public static InProgressTicket Reopen(ClosedTicket ticket, DateTimeOffset reopenedAt) =>
-        new(
-            ticket.Id,
-            ticket.Subject,
-            ticket.Description,
-            ticket.Requester,
-            ticket.CreatedAt,
-            ticket.AssignedAgent,
-            reopenedAt
-        );
+    // A resolved ticket can always come back; a closed one only within ReopenWindow of closing.
+    public static ReopenOutcome Reopen(ClosedTicket ticket, DateTimeOffset reopenedAt) =>
+        reopenedAt - ticket.ClosedAt > ReopenWindow
+            ? new ReopenWindowElapsed(ticket.ClosedAt + ReopenWindow)
+            : new Reopened(
+                new InProgressTicket(
+                    ticket.Id,
+                    ticket.Subject,
+                    ticket.Description,
+                    ticket.Requester,
+                    ticket.CreatedAt,
+                    ticket.AssignedAgent,
+                    reopenedAt
+                )
+            );
 }

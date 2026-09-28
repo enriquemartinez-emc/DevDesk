@@ -69,11 +69,22 @@ public static class AssignTicketEndpoint
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ticket cannot be assigned.",
-                detail: "Only open tickets can be assigned."
+                detail: $"Only open tickets can be assigned, and this ticket is {row.Status}."
             );
         }
 
-        var assigned = TicketRules.Assign(open, new AgentId(request.AgentId), time.GetUtcNow());
+        if (
+            TicketRules.Assign(open, new AgentId(request.AgentId), time.GetUtcNow())
+            is not Assigned
+            (var assigned)
+        )
+        {
+            return TypedResults.Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Ticket cannot be assigned.",
+                detail: "An agent cannot be assigned to their own ticket."
+            );
+        }
 
         const string updateSql = """
             update tickets
@@ -90,7 +101,7 @@ public static class AssignTicketEndpoint
                 new
                 {
                     Id = assigned.Id.Value,
-                    Status = "in_progress",
+                    Status = TicketStatuses.InProgress,
                     AssignedAgent = assigned.AssignedAgent.Value,
                     assigned.AssignedAt,
                 },
@@ -121,14 +132,14 @@ file sealed record DbTicketRow
     public Ticket ToDomain() =>
         Status switch
         {
-            "open" => new OpenTicket(
+            TicketStatuses.Open => new OpenTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
                 new RequesterId(RequesterId),
                 new DateTimeOffset(CreatedAt)
             ),
-            "in_progress" => new InProgressTicket(
+            TicketStatuses.InProgress => new InProgressTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -137,7 +148,7 @@ file sealed record DbTicketRow
                 new AgentId(AssignedAgent!.Value),
                 new DateTimeOffset(AssignedAt!.Value)
             ),
-            "resolved" => new ResolvedTicket(
+            TicketStatuses.Resolved => new ResolvedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -148,7 +159,7 @@ file sealed record DbTicketRow
                 ResolutionNote!,
                 new DateTimeOffset(ResolvedAt!.Value)
             ),
-            "closed" => new ClosedTicket(
+            TicketStatuses.Closed => new ClosedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,

@@ -46,7 +46,7 @@ public static class CloseTicketEndpoint
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ticket cannot be closed.",
-                detail: "Only resolved tickets can be closed."
+                detail: $"Only resolved tickets can be closed, and this ticket is {row.Status}."
             );
         }
 
@@ -64,7 +64,7 @@ public static class CloseTicketEndpoint
                 new
                 {
                     Id = closed.Id.Value,
-                    Status = "closed",
+                    Status = TicketStatuses.Closed,
                     closed.ClosedAt,
                 },
                 cancellationToken: ct
@@ -94,14 +94,14 @@ file sealed record DbTicketRow
     public Ticket ToDomain() =>
         Status switch
         {
-            "open" => new OpenTicket(
+            TicketStatuses.Open => new OpenTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
                 new RequesterId(RequesterId),
                 new DateTimeOffset(CreatedAt)
             ),
-            "in_progress" => new InProgressTicket(
+            TicketStatuses.InProgress => new InProgressTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -110,7 +110,7 @@ file sealed record DbTicketRow
                 new AgentId(AssignedAgent!.Value),
                 new DateTimeOffset(AssignedAt!.Value)
             ),
-            "resolved" => new ResolvedTicket(
+            TicketStatuses.Resolved => new ResolvedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -121,7 +121,7 @@ file sealed record DbTicketRow
                 ResolutionNote!,
                 new DateTimeOffset(ResolvedAt!.Value)
             ),
-            "closed" => new ClosedTicket(
+            TicketStatuses.Closed => new ClosedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,

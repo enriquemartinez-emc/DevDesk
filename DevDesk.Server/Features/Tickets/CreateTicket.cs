@@ -56,7 +56,7 @@ public static class CreateTicketEndpoint
                     ticket.Description,
                     RequesterId = ticket.Requester.Value,
                     ticket.CreatedAt,
-                    Status = "open",
+                    Status = TicketStatuses.Open,
                 },
                 cancellationToken: ct
             )

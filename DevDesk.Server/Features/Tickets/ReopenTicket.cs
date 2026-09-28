@@ -42,19 +42,25 @@ public static class ReopenTicketEndpoint
         }
 
         var reopenedAt = time.GetUtcNow();
-        var reopened = row.ToDomain() switch
+        ReopenOutcome? outcome = row.ToDomain() switch
         {
-            ResolvedTicket resolved => TicketRules.Reopen(resolved, reopenedAt),
+            ResolvedTicket resolved => new Reopened(TicketRules.Reopen(resolved, reopenedAt)),
             ClosedTicket closed => TicketRules.Reopen(closed, reopenedAt),
             _ => null,
         };
 
-        if (reopened is null)
+        if (outcome is not Reopened(var reopened))
         {
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Ticket cannot be reopened.",
-                detail: "Only resolved or closed tickets can be reopened."
+                detail: outcome switch
+                {
+                    ReopenWindowElapsed elapsed =>
+                        $"This ticket closed too long ago to reopen (the window ended {elapsed.ExpiredAt:yyyy-MM-dd}); open a new ticket instead.",
+                    _ =>
+                        $"Only resolved or closed tickets can be reopened, and this ticket is {row.Status}.",
+                }
             );
         }
 
@@ -71,7 +77,7 @@ public static class ReopenTicketEndpoint
                 new
                 {
                     Id = reopened.Id.Value,
-                    Status = "in_progress",
+                    Status = TicketStatuses.InProgress,
                     AssignedAgent = reopened.AssignedAgent.Value,
                     reopened.AssignedAt,
                 },
@@ -102,14 +108,14 @@ file sealed record DbTicketRow
     public Ticket ToDomain() =>
         Status switch
         {
-            "open" => new OpenTicket(
+            TicketStatuses.Open => new OpenTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
                 new RequesterId(RequesterId),
                 new DateTimeOffset(CreatedAt)
             ),
-            "in_progress" => new InProgressTicket(
+            TicketStatuses.InProgress => new InProgressTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -118,7 +124,7 @@ file sealed record DbTicketRow
                 new AgentId(AssignedAgent!.Value),
                 new DateTimeOffset(AssignedAt!.Value)
             ),
-            "resolved" => new ResolvedTicket(
+            TicketStatuses.Resolved => new ResolvedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
@@ -129,7 +135,7 @@ file sealed record DbTicketRow
                 ResolutionNote!,
                 new DateTimeOffset(ResolvedAt!.Value)
             ),
-            "closed" => new ClosedTicket(
+            TicketStatuses.Closed => new ClosedTicket(
                 new TicketId(Id),
                 Subject,
                 Description,
