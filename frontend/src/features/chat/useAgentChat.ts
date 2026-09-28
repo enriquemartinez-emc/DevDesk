@@ -18,10 +18,22 @@ export function useAgentChat() {
       agent.addMessage({ id: crypto.randomUUID(), role: 'user', content: text });
       setMessages([...agent.messages]);
 
+      let finished = false;
       await agent.runAgent(
         {},
-        { onMessagesChanged: ({ messages: updated }) => setMessages([...updated]) },
+        {
+          onMessagesChanged: ({ messages: updated }) => setMessages([...updated]),
+          onRunFinishedEvent: () => {
+            finished = true;
+          },
+        },
       );
+
+      // A dropped connection ends the stream without RUN_FINISHED or RUN_ERROR; don't let that
+      // look like an empty successful answer.
+      if (!finished) {
+        throw new Error('The connection to the assistant closed before it finished. Try again.');
+      }
     },
   });
 
