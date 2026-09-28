@@ -26,7 +26,7 @@ aspire stop         # when you're done
 `aspire start` brings up Postgres (pgvector), Azurite, Ollama, Grafana, every service and the frontend, and runs the
 database migrations (`migrations`, which runs first) and then the runbook ingestion job once the embedding model is ready.
 
-**First run is slow.** It pulls the container images and downloads the models (`llama3.2`, roughly 2 GB, and
+**First run is slow.** It pulls the container images and downloads the models (`granite4:micro`, roughly 2 GB, and
 `nomic-embed-text`, roughly 270 MB). Data and models persist in Docker volumes, so later starts take a minute or two.
 Wait until `mcp`, `server` and `webfrontend` are healthy and `migrations` and `ingestion` show *Finished* in the dashboard
 (or run `aspire wait server`).

@@ -93,6 +93,7 @@ Things that cost time once and aren't obvious from the code:
 
 - **Postgres 18 data volume**: `WithDataVolume()` picks the container data directory from the image tag at call time, and the pgvector tag doesn't parse as 18+. Call it *before* `WithImage(...)`.
 - **Slow local models**: `ServiceDefaults` raises the standard resilience timeouts (3 min per attempt, 6 min total); the ~30s defaults cancelled Ollama chat calls mid-generation.
+- **Chat model**: `ModelNames.Chat` (`granite4:micro`, Apache-2.0, ~2 GB) replaced `llama3.2`, which answered from the search results worse and routed some research questions wrongly. Skip reasoning models such as `qwen3`: their "thinking" tokens stream into the chat and are slow on CPU. After changing the model or the classifier prompt, ask a research, a lookup and a greeting question.
 - **MCP endpoint**: the MCP client transport needs a concrete `http(s)` URL and rejects Aspire's `https+http://` scheme, so `McpConnection` in `DevDesk.Server` reads `services:mcp:*` configuration.
 - **AG-UI nulls**: the Agent Framework hosting package loses the AG-UI SDK's omit-nulls rule on net10, and the TypeScript client rejects `null` fields. `SupportChat` inserts `AGUIJsonUtilities.DefaultTypeInfoResolver` into the JSON options; keep it (it only answers for AG-UI types, so the ticket API's JSON is unaffected).
 - **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.

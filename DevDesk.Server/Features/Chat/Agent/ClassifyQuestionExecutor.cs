@@ -10,8 +10,9 @@ public sealed partial class ClassifyQuestionExecutor(IChatClient chatClient)
 {
     private const string Instructions = """
         Classify the support agent's latest message. Reply with exactly one word.
-        Reply "research" if they ask how to fix or handle a problem, whether something has happened
-        before, or what fixed it last time.
+        Reply "research" if they ask how to fix or handle a problem, or whether something has happened
+        before or what fixed it, whatever the subject: always research such questions, even if the
+        problem sounds unlikely.
         Reply "conversation" for anything else: greetings, thanks, questions about one specific
         ticket by its id, or follow-ups about what was just said.
         """;
