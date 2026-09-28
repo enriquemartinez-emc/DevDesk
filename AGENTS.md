@@ -16,7 +16,7 @@ DevDesk is a support-ticket assistant. Support agents ask it things like:
 | Orchestration              | .NET Aspire 13.5, **Starter App (ASP.NET Core/React)** template — Minimal API + React, no Docker Compose                                                                                     |
 | Cross-cutting              | `DevDesk.ServiceDefaults` — Aspire project, provides shared OpenTelemetry, health checks, and resilience for every service                                                                   |
 | Agent                      | Microsoft Agent Framework (MAF), GA — `AIAgent` + `Workflows` for multi-step graphs                                                                                                          |
-| Tool exposure              | Model Context Protocol (MCP) — custom `DevDesk.Mcp` server groups `LookupTicket` + `SearchRunbooks`                                                                                          |
+| Tool exposure              | Model Context Protocol (MCP) — custom `DevDesk.Mcp` server groups `LookupTicket` + `SearchRunbooks` + `SearchTickets`                                                                                          |
 | Agent ↔ frontend streaming | **AG-UI**, via the official .NET SDK — replaces a single-shot `/chat` POST with a real event stream (tool calls, text deltas, run lifecycle)                                                 |
 | Database                   | PostgreSQL 18 + pgvector — structured (`tickets`) and vector (`doc_chunks`) data in one instance                                                                                             |
 | Object storage             | Azure Storage emulator (Azurite) — raw runbooks before ingestion                                                                                                                             |
@@ -33,7 +33,7 @@ DevDesk.AppHost (orchestrator; names, images, models and ports are constants bes
  ├─ frontend           React + Vite + shadcn/ui — chat UI (AG-UI stream) + tickets panel
  ├─ DevDesk.Server     Minimal API — ticket CRUD; forwards /agui to the agent in published builds
  ├─ DevDesk.Agent      Hosts the AIAgent (Microsoft Agent Framework): AG-UI + OpenAI Responses endpoints
- ├─ DevDesk.Mcp        MCP server — groups LookupTicket + SearchRunbooks as tools
+ ├─ DevDesk.Mcp        MCP server — groups LookupTicket + SearchRunbooks + SearchTickets as tools
  ├─ DevDesk.Ingestion  One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
  ├─ DevUI              In-process aggregator (no container) — agent conversation/tool-call debugging
  ├─ Postgres 18 (pgvector image)     — tickets + doc_chunks
@@ -46,7 +46,7 @@ Every one of these is a native Aspire resource, added in `DevDesk.AppHost/AppHos
 
 **Chat flow**: the browser streams AG-UI events from `/agui`. In dev, Vite proxies `/agui` straight to `DevDesk.Agent`; in a published build `DevDesk.Server` forwards it (YARP). The agent calls tools on `DevDesk.Mcp`; the tools query Postgres directly with Dapper (`LookupTicket` and `SearchTickets` read `tickets`; `SearchRunbooks` embeds the query with Ollama and searches `doc_chunks` in pgvector). `DevDesk.Mcp` never calls `DevDesk.Server`.
 
-**Agent design**: `DevDesk.Agent` doesn't define its tools inline. It discovers `LookupTicket` and `SearchRunbooks` from `DevDesk.Mcp` — that's what "grouping the tools on an MCP server" means here. `DevDesk.Agent` is a separate service from `DevDesk.Server` deliberately: ticket CRUD and LLM calls have different latency, cost, and scaling profiles.
+**Agent design**: `DevDesk.Agent` doesn't define its tools inline. It discovers `LookupTicket`, `SearchRunbooks` and `SearchTickets` from `DevDesk.Mcp` — that's what "grouping the tools on an MCP server" means here. `DevDesk.Agent` is a separate service from `DevDesk.Server` deliberately: ticket CRUD and LLM calls have different latency, cost, and scaling profiles.
 
 **Observability**: MAF and Microsoft.Extensions.AI instrument themselves with OpenTelemetry, and `ServiceDefaults` exports every project's traces, metrics and logs to both the Aspire Dashboard and `grafana-lgtm` (the AppHost passes each service `GRAFANA_OTLP_ENDPOINT`). The `grafana-lgtm` container is a single image that bundles the Collector, Prometheus (metrics), Loki (logs), Tempo (traces), and Grafana — no hand-written collector config. Use the Aspire Dashboard for day-to-day dev-loop debugging and Grafana for a production-shaped view; they're not redundant, they're different altitudes. DevUI adds a third altitude: stepping through one agent conversation's tool calls specifically.
 
