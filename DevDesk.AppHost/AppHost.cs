@@ -52,23 +52,28 @@ var observability = builder
 
 var grafanaOtlp = observability.GetEndpoint(Topology.OtlpGrpcEndpointName);
 
+var migrations = builder
+    .AddProject<Projects.DevDesk_Migrations>(ResourceNames.Migrations)
+    .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
+    .WithReference(database)
+    .WaitFor(database);
+
 var server = builder
     .AddProject<Projects.DevDesk_Server>(ResourceNames.Server)
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
-    .WaitFor(database)
+    .WaitForCompletion(migrations)
     .WithReference(chatModel)
     .WaitFor(chatModel)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
-// No WaitFor(server): only the server-hosted agent calls mcp, after it has created the tickets table.
 #pragma warning disable ASPIREMCP001
 var mcp = builder
     .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
-    .WaitFor(database)
+    .WaitForCompletion(migrations)
     .WithReference(embeddingModel)
     .WaitFor(embeddingModel)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
@@ -82,14 +87,13 @@ _ = builder
     .WithAgentService(server, agents: [new(ResourceNames.SupportAgent)])
     .WaitFor(server);
 
-// Waits for mcp because DevDesk.Mcp creates the doc_chunks table.
 var ingestion = builder
     .AddProject<Projects.DevDesk_Ingestion>(ResourceNames.Ingestion)
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WithReference(runbooks)
     .WithReference(embeddingModel)
-    .WaitFor(mcp)
+    .WaitForCompletion(migrations)
     .WaitFor(runbooks)
     .WaitFor(embeddingModel)
     .WithEnvironment(

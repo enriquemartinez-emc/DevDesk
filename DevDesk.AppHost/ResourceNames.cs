@@ -12,6 +12,7 @@ public static class ResourceNames
 
     public const string Observability = "grafana-lgtm";
 
+    public const string Migrations = "migrations";
     public const string Server = "server";
     public const string Mcp = "mcp";
     public const string Ingestion = "ingestion";

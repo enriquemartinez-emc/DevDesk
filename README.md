@@ -24,11 +24,11 @@ aspire stop         # when you're done
 ```
 
 `aspire start` brings up Postgres (pgvector), Azurite, Ollama, Grafana, every service and the frontend, and runs the
-runbook ingestion job once the `mcp` service (which creates the `doc_chunks` table) and the embedding model are ready.
+database migrations (`migrations`, which runs first) and then the runbook ingestion job once the embedding model is ready.
 
 **First run is slow.** It pulls the container images and downloads the models (`llama3.2`, roughly 2 GB, and
 `nomic-embed-text`, roughly 270 MB). Data and models persist in Docker volumes, so later starts take a minute or two.
-Wait until `mcp`, `server` and `webfrontend` are healthy and `ingestion` shows *Finished* in the dashboard
+Wait until `mcp`, `server` and `webfrontend` are healthy and `migrations` and `ingestion` show *Finished* in the dashboard
 (or run `aspire wait server`).
 
 ## Where to look
@@ -42,7 +42,7 @@ Wait until `mcp`, `server` and `webfrontend` are healthy and `ingestion` shows *
 
 ## Try it
 
-The UI has no ticket form yet, so create a ticket through the API:
+Click **New ticket** in the UI, or create one through the API:
 
 ```bash
 curl -X POST http://localhost:5480/api/tickets \

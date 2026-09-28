@@ -18,6 +18,7 @@ DevDesk is a support-ticket assistant. Support agents ask it things like:
 | Agent                      | Microsoft Agent Framework (MAF), GA — `AIAgent` + `Workflows` for multi-step graphs                                                                                                          |
 | Tool exposure              | Model Context Protocol (MCP) — custom `DevDesk.Mcp` server groups `LookupTicket` + `SearchRunbooks` + `SearchTickets`                                                                                          |
 | Agent ↔ frontend streaming | **AG-UI**, via the official .NET SDK — replaces a single-shot `/chat` POST with a real event stream (tool calls, text deltas, run lifecycle)                                                 |
+| Migrations                 | **DbUp** — `DevDesk.Migrations`, a one-shot project that applies numbered SQL scripts before any service starts                                                                               |
 | Database                   | PostgreSQL 18 + pgvector — structured (`tickets`) and vector (`doc_chunks`) data in one instance                                                                                             |
 | Object storage             | Azure Storage emulator (Azurite) — raw runbooks before ingestion                                                                                                                             |
 | LLM + embeddings           | Ollama (community toolkit integration) — local chat + embedding models                                                                                                                       |
@@ -33,6 +34,7 @@ DevDesk.AppHost (orchestrator; names, images, models and ports are constants bes
  ├─ frontend           React + Vite + shadcn/ui — chat UI (AG-UI stream) + tickets panel
  ├─ DevDesk.Server     Minimal API — ticket CRUD; also hosts the support agent (Agent Framework workflow): AG-UI at /agui + OpenAI Responses endpoints
  ├─ DevDesk.Mcp        MCP server — groups LookupTicket + SearchRunbooks + SearchTickets as tools
+ ├─ DevDesk.Migrations One-shot job — applies the numbered SQL scripts (tickets, doc_chunks) with DbUp
  ├─ DevDesk.Ingestion  One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
  ├─ DevUI              In-process aggregator (no container) — agent conversation/tool-call debugging
  ├─ Postgres 18 (pgvector image)     — tickets + doc_chunks
@@ -72,7 +74,8 @@ DevDesk/
 │           └── Agent/            # what the agent is: SupportWorkflow (the graph), SupportAgents (the LLM agents and their
 │                                 # instructions), the executors, SupportTools (MCP tool names), Question (routing types)
 ├── DevDesk.Mcp/                  # MCP server, flat (no Features/ folders): one file per tool, TicketRow.cs,
-│                                  # RunbooksSchema.cs; tools query Postgres directly with Dapper
+│                                  # tools query Postgres directly with Dapper
+├── DevDesk.Migrations/           # one-shot job: DbUp applies Scripts/NNNN_*.sql (embedded resources), in name order
 ├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks
 ├── frontend/                     # React + Vite + shadcn/ui
 │   ├── openapi/                  # committed OpenAPI document the API client is generated from
@@ -93,7 +96,8 @@ Things that cost time once and aren't obvious from the code:
 - **MCP endpoint**: the MCP client transport needs a concrete `http(s)` URL and rejects Aspire's `https+http://` scheme, so `McpConnection` in `DevDesk.Server` reads `services:mcp:*` configuration.
 - **AG-UI nulls**: the Agent Framework hosting package loses the AG-UI SDK's omit-nulls rule on net10, and the TypeScript client rejects `null` fields. `SupportChat` inserts `AGUIJsonUtilities.DefaultTypeInfoResolver` into the JSON options; keep it (it only answers for AG-UI types, so the ticket API's JSON is unaffected).
 - **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.
-- **Startup order**: `server` waits for `mcp` (it discovers the tools at startup); `mcp` has no `WaitFor(server)` because only the server calls it and the server creates the `tickets` table before it serves anything. Don't add one: it would be a deadlock.
+- **Startup order**: `migrations` runs first and `server`, `mcp` and `ingestion` use `WaitForCompletion(migrations)`, so no service creates or alters tables itself. `server` also waits for `mcp` (it discovers the tools at startup); `mcp` must not wait for `server`, which would deadlock.
+- **Migrations**: change the schema only by adding a new numbered script under `DevDesk.Migrations/Scripts` (never edit one that has been applied). The two baseline scripts use `if not exists` so databases created before migrations existed adopt them.
 - **Prerelease hosting packages**: the Agent Framework core (`Microsoft.Agents.AI`, Workflows) is GA, but `Microsoft.Agents.AI.Hosting`, `.Hosting.AGUI.AspNetCore`, `.Hosting.OpenAI` (alpha) and `.DevUI` (AppHost) only ship prerelease versions. They now live in `DevDesk.Server`, so bump them deliberately and re-check the chat (a TypeScript AG-UI client run against `/agui`) and the ticket API.
 - **OpenAPI stays ticket-only**: the Server's OpenAPI document is filtered to `api/*`, otherwise `/agui` and DevUI's `/v1/*` endpoints leak into the generated frontend client.
 - **DevUI**: the AppHost needs `Microsoft.Agents.AI.DevUI` directly (it holds the web UI; without it `/devui/` is 404). The agent name in `DevDesk.Server/Features/Chat/SupportChat.cs` must match `ResourceNames.SupportAgent`.
@@ -122,6 +126,7 @@ Things that cost time once and aren't obvious from the code:
 1. **No magic strings or numbers in `DevDesk.AppHost/AppHost.cs`.** Names, image tags, model names, and ports live in `ResourceNames.cs`, `ContainerImages.cs`, `ModelNames.cs`, and `Topology.cs`, alongside `AppHost.cs` in the same project — no separate `AppHost.Core` project. `AppHost.cs` should read as a list of resources, nothing to decode.
 2. **`DevDesk.Server.Core` has zero I/O package references** — no Npgsql, no Dapper, no ASP.NET. If a change makes `DevDesk.Server.Core` need one of those, the logic belongs in a handler in `DevDesk.Server` instead.
 3. **Tools live in `DevDesk.Mcp`, not inline in the agent.** The agent (in `DevDesk.Server/Features/Chat`) discovers tools; it doesn't define them.
+4. **Schema changes only through `DevDesk.Migrations`.** Services never run `create`/`alter` statements themselves.
 
 ## Git workflow
 
