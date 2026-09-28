@@ -1,4 +1,4 @@
-export const ticketStatusLabels: Record<string, string> = {
+const ticketStatusLabels: Record<string, string> = {
   open: 'Open',
   in_progress: 'In progress',
   resolved: 'Resolved',

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
+const REFRESH_INTERVAL_MS = 15_000;
+
 export const ticketKeys = {
   all: ['tickets'] as const,
   list: () => [...ticketKeys.all, 'list'] as const,
@@ -10,6 +12,6 @@ export function useTickets() {
   return useQuery({
     queryKey: ticketKeys.list(),
     queryFn: async () => (await api.api.listTickets()).data,
-    refetchInterval: 15_000,
+    refetchInterval: REFRESH_INTERVAL_MS,
   });
 }

@@ -1,4 +1,4 @@
-export const toolLabels: Record<string, { running: string; done: string }> = {
+const toolLabels: Record<string, { running: string; done: string }> = {
   lookup_ticket: { running: 'Looking up ticket…', done: 'Looked up ticket' },
   search_runbooks: { running: 'Searching runbooks…', done: 'Searched runbooks' },
   search_tickets: { running: 'Searching tickets…', done: 'Searched tickets' },
