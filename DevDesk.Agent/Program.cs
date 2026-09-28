@@ -27,7 +27,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     )
 );
 
-// Discover LookupTicket + SearchRunbooks from DevDesk.Mcp - the agent doesn't define tools itself.
+// Discover LookupTicket, SearchTickets and SearchRunbooks from DevDesk.Mcp - the agent doesn't define tools itself.
 // This happens before the host is built because AddAIAgent registers the agent in DI (which DevUI
 // and the OpenAI-compatible endpoints resolve by name).
 // HttpClientTransportOptions.Endpoint requires a concrete http(s) URI (it rejects Aspire's
@@ -55,8 +55,10 @@ builder.AddAIAgent(
             name: SupportAgentName,
             instructions: """
             You are a support-desk assistant for DevDesk. Use lookup_ticket to answer questions
-            about a specific ticket's status. Use search_runbooks to answer "how do we fix this"
-            or "has this come up before" questions. Combine both when a question needs it.
+            about a specific ticket's status. Use search_runbooks for "how do we fix this"
+            questions about documented procedures. Use search_tickets for "has this come up
+            before" or "what fixed it last time" questions about past tickets. Combine them
+            when a question needs it, and don't call a tool for a greeting or small talk.
             """,
             tools: [.. mcpTools.Cast<AITool>()]
         )
