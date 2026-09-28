@@ -5,7 +5,7 @@ using Microsoft.Extensions.AI;
 using ModelContextProtocol.Server;
 using Npgsql;
 
-namespace DevDesk.Mcp.Features.Runbooks;
+namespace DevDesk.Mcp;
 
 [McpServerToolType]
 public static class SearchRunbooksTool

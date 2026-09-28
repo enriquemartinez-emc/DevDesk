@@ -66,8 +66,9 @@ var server = builder
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
-// DevDesk.Mcp groups LookupTicket (calls the server's ticket API) and SearchRunbooks
-// (pgvector similarity search embedded via the Ollama embedding model) as MCP tools.
+// DevDesk.Mcp groups LookupTicket and SearchTickets (both read the tickets table directly) and
+// SearchRunbooks (pgvector similarity search embedded via the Ollama embedding model) as MCP tools.
+// It waits for the server only because the server creates the tickets table.
 #pragma warning disable ASPIREMCP001
 var mcp = builder
     .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
@@ -76,14 +77,13 @@ var mcp = builder
     .WaitFor(database)
     .WithReference(embeddingModel)
     .WaitFor(embeddingModel)
-    .WithReference(server)
     .WaitFor(server)
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithMcpServer();
 #pragma warning restore ASPIREMCP001
 
-// DevDesk.Agent hosts the AIAgent (Microsoft Agent Framework), discovers LookupTicket and
-// SearchRunbooks from DevDesk.Mcp as an MCP client, and streams to the frontend via AG-UI.
+// DevDesk.Agent hosts the AIAgent (Microsoft Agent Framework), discovers LookupTicket, SearchTickets
+// and SearchRunbooks from DevDesk.Mcp as an MCP client, and streams to the frontend via AG-UI.
 var agent = builder
     .AddProject<Projects.DevDesk_Agent>(ResourceNames.Agent)
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)

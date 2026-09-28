@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace DevDesk.Mcp.Features.Runbooks;
+namespace DevDesk.Mcp;
 
 public static class RunbooksSchema
 {

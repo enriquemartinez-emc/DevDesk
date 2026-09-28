@@ -1,8 +1,9 @@
 using System.ComponentModel;
-using DevDesk.Mcp.Clients;
+using Dapper;
 using ModelContextProtocol.Server;
+using Npgsql;
 
-namespace DevDesk.Mcp.Features.Tickets;
+namespace DevDesk.Mcp;
 
 [McpServerToolType]
 public static class LookupTicketTool
@@ -15,11 +16,22 @@ public static class LookupTicketTool
     ]
     public static async Task<string> LookupTicket(
         [Description("The ticket's id (GUID)")] Guid ticketId,
-        TicketsApiClient client,
+        NpgsqlDataSource dataSource,
         CancellationToken cancellationToken
     )
     {
-        var ticket = await client.GetTicketAsync(ticketId, cancellationToken);
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+        const string lookupSql = $"select {TicketRow.Columns} from tickets where id = @Id";
+
+        var ticket = await connection.QuerySingleOrDefaultAsync<TicketRow>(
+            new CommandDefinition(
+                lookupSql,
+                new { Id = ticketId },
+                cancellationToken: cancellationToken
+            )
+        );
+
         if (ticket is null)
         {
             return $"No ticket found with id {ticketId}.";

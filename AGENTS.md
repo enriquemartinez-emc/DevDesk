@@ -44,7 +44,7 @@ DevDesk.AppHost (orchestrator; names, images, models and ports are constants bes
 
 Every one of these is a native Aspire resource, added in `DevDesk.AppHost/AppHost.cs`. `aspire start` is the only setup command — it starts the database, storage emulator, local models, every service, and the full observability stack together.
 
-**Chat flow**: the browser streams AG-UI events from `/agui`. In dev, Vite proxies `/agui` straight to `DevDesk.Agent`; in a published build `DevDesk.Server` forwards it (YARP). The agent calls tools on `DevDesk.Mcp`; `LookupTicket` calls the Server's ticket API and `SearchRunbooks` embeds the query with Ollama and searches `doc_chunks` in pgvector.
+**Chat flow**: the browser streams AG-UI events from `/agui`. In dev, Vite proxies `/agui` straight to `DevDesk.Agent`; in a published build `DevDesk.Server` forwards it (YARP). The agent calls tools on `DevDesk.Mcp`; the tools query Postgres directly with Dapper (`LookupTicket` and `SearchTickets` read `tickets`; `SearchRunbooks` embeds the query with Ollama and searches `doc_chunks` in pgvector). `DevDesk.Mcp` never calls `DevDesk.Server`.
 
 **Agent design**: `DevDesk.Agent` doesn't define its tools inline. It discovers `LookupTicket` and `SearchRunbooks` from `DevDesk.Mcp` — that's what "grouping the tools on an MCP server" means here. `DevDesk.Agent` is a separate service from `DevDesk.Server` deliberately: ticket CRUD and LLM calls have different latency, cost, and scaling profiles.
 
@@ -70,7 +70,8 @@ DevDesk/
 │       ├── Tickets/              # one file per use case: request, validator, endpoint, handler, SQL,
 │       │                         # and a file-scoped Db*Row DTO; plus TicketsEndpoints.cs (route group)
 │       └── Chat/ChatProxy.cs     # forwards /agui to the agent
-├── DevDesk.Mcp/                  # MCP server — LookupTicket, SearchRunbooks tools
+├── DevDesk.Mcp/                  # MCP server, flat (no Features/ folders): one file per tool, TicketRow.cs,
+│                                  # RunbooksSchema.cs; tools query Postgres directly with Dapper
 ├── DevDesk.Agent/                # hosts the AIAgent, MCP client, chat model, AG-UI + DevUI endpoints
 ├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks
 ├── frontend/                     # React + Vite + shadcn/ui
@@ -92,7 +93,7 @@ Things that cost time once and aren't obvious from the code:
 - **MCP endpoint**: the MCP client transport needs a concrete `http(s)` URL and rejects Aspire's `https+http://` scheme, so `DevDesk.Agent` reads `services:mcp:*` configuration.
 - **AG-UI nulls**: the Agent Framework hosting package loses the AG-UI SDK's omit-nulls rule on net10, and the TypeScript client rejects `null` fields. `DevDesk.Agent` inserts `AGUIJsonUtilities.DefaultTypeInfoResolver` into the JSON options; keep it.
 - **One message per model turn**: OllamaSharp streaming updates have no message id, so `StableMessageIdChatClient` stamps one; without it every token becomes its own AG-UI message.
-- **Startup cycle**: `server` → `agent` → `mcp` → `server`. The Server only references the agent (no `WaitFor`); don't add one.
+- **Startup cycle**: `server` → `agent` → `mcp` → `server`. `mcp` only waits for `server` because the Server creates the `tickets` table (it makes no calls to it). The Server only references the agent (no `WaitFor`); don't add one.
 - **DevUI**: the AppHost needs `Microsoft.Agents.AI.DevUI` directly (it holds the web UI; without it `/devui/` is 404). The agent name in `DevDesk.Agent/Program.cs` must match `ResourceNames.SupportAgent`.
 - **No `"use client"` in the frontend**: this is a Vite SPA, so the Next.js directive does nothing. The shadcn and AI Elements registries still ship it (even with `"rsc": false`), so strip the first line from any file `shadcn add` brings in.
 - **API client generation**: don't pass `--http-client` to `swagger-typescript-api`; any value selects Axios. Regenerate with `npm run fetch:openapi` then `npm run generate:api`.

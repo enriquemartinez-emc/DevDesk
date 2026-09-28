@@ -1,5 +1,4 @@
-using DevDesk.Mcp.Clients;
-using DevDesk.Mcp.Features.Runbooks;
+using DevDesk.Mcp;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,11 +12,6 @@ builder
 
 builder.AddNpgsqlDataSource("devdeskdb");
 builder.AddOllamaApiClient("ollama-nomic-embed-text").AddEmbeddingGenerator();
-
-builder.Services.AddHttpClient<TicketsApiClient>(client =>
-{
-    client.BaseAddress = new Uri("https+http://server");
-});
 
 var app = builder.Build();
 
