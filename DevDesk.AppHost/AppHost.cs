@@ -79,6 +79,10 @@ var agent = builder
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
+// The Server forwards /agui to the agent in a published build. Reference only, no WaitFor:
+// server -> agent -> mcp -> server would be a startup cycle.
+server.WithReference(agent);
+
 // DevUI: an in-process aggregator (no container) for stepping through agent conversations and
 // tool calls. It talks to the agent's OpenAI Responses/Conversations endpoints.
 _ = builder

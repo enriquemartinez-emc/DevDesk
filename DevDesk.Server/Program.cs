@@ -1,3 +1,4 @@
+using DevDesk.Server.Features.Chat;
 using DevDesk.Server.Features.Tickets;
 using FluentValidation;
 using Npgsql;
@@ -12,6 +13,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.AddNpgsqlDataSource("devdeskdb");
+builder.Services.AddChatProxy();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -32,6 +34,7 @@ await TicketsSchema.EnsureCreatedAsync(
 );
 
 app.MapTicketsEndpoints();
+app.MapChatProxy();
 
 app.MapDefaultEndpoints();
 
