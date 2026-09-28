@@ -4,8 +4,5 @@ namespace DevDesk.ServiceDefaults;
 public static class ServiceResources
 {
     public const string Database = "devdeskdb";
-    public const string Runbooks = "runbooks";
-    public const string ChatModel = "chat-model";
     public const string EmbeddingModel = "embedding-model";
-    public const string Mcp = "mcp";
 }

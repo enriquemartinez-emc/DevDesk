@@ -10,7 +10,7 @@ namespace DevDesk.Mcp;
 public static class SearchTicketsTool
 {
     [
-        McpServerTool(Name = ToolNames.SearchTickets),
+        McpServerTool(Name = "search_tickets"),
         Description(
             "Search existing tickets, of any status, for similar problems, including how resolved ones were fixed. "
                 + "Use it for \"has this come up before?\" and \"what fixed it last time?\" questions."
@@ -31,8 +31,7 @@ public static class SearchTicketsTool
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
-        // plainto_tsquery sanitizes free text; the replace turns its AND into OR, because a question is
-        // rarely an exact phrase. ts_rank puts the tickets matching the most keywords first.
+        // plainto_tsquery sanitizes free text; the replace turns its AND into OR since a question is rarely an exact phrase.
         const string searchSql = $"""
             with documents as (
                 select t.*,

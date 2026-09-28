@@ -9,7 +9,7 @@ namespace DevDesk.Mcp;
 public static class LookupTicketTool
 {
     [
-        McpServerTool(Name = ToolNames.LookupTicket),
+        McpServerTool(Name = "lookup_ticket"),
         Description(
             "Look up a support ticket by id and return its current status, assignment, and resolution details."
         )

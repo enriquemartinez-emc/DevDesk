@@ -1,4 +1,3 @@
-using DevDesk.ServiceDefaults;
 using ModelContextProtocol.Client;
 
 namespace DevDesk.Server.Features.Chat;
@@ -6,6 +5,7 @@ namespace DevDesk.Server.Features.Chat;
 public sealed class McpConnection : IAsyncDisposable
 {
     private const string ClientName = "devdesk-mcp";
+    private const string ResourceName = "mcp";
 
     private readonly HttpClient httpClient;
 
@@ -24,13 +24,12 @@ public sealed class McpConnection : IAsyncDisposable
         CancellationToken cancellationToken = default
     )
     {
-        // The MCP transport rejects Aspire's "https+http://" pseudo-scheme, so use the concrete URL
-        // that WithReference(mcp) injects.
+        // The MCP transport rejects Aspire's "https+http://" pseudo-scheme, so use the concrete URL WithReference(mcp) injects.
         var url =
-            configuration[$"services:{ServiceResources.Mcp}:https:0"]
-            ?? configuration[$"services:{ServiceResources.Mcp}:http:0"]
+            configuration[$"services:{ResourceName}:https:0"]
+            ?? configuration[$"services:{ResourceName}:http:0"]
             ?? throw new InvalidOperationException(
-                $"Missing service discovery configuration for '{ServiceResources.Mcp}'."
+                $"Missing service discovery configuration for '{ResourceName}'."
             );
 
         var httpClient = new HttpClient();

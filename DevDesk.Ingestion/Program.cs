@@ -7,7 +7,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddValidatedOptions<IngestionOptions>(IngestionOptions.SectionName);
 builder.AddNpgsqlDataSource(ServiceResources.Database);
-builder.AddAzureBlobServiceClient(ServiceResources.Runbooks);
+builder.AddAzureBlobServiceClient("runbooks");
 builder.AddOllamaApiClient(ServiceResources.EmbeddingModel).AddEmbeddingGenerator();
 
 builder.Services.AddSingleton<RunbookIngestor>();

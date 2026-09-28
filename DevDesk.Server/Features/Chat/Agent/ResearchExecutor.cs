@@ -8,6 +8,7 @@ namespace DevDesk.Server.Features.Chat.Agent;
 
 [SendsMessage(typeof(ChatMessage))]
 [SendsMessage(typeof(TurnToken))]
+// Calls the MCP tools directly rather than via a tool-calling agent: both searches must always run, and the local model was unreliable at choosing tools.
 public sealed class ResearchExecutor(McpClient mcpClient) : Executor<RoutedQuestion>("research")
 {
     public override async ValueTask HandleAsync(
@@ -18,13 +19,8 @@ public sealed class ResearchExecutor(McpClient mcpClient) : Executor<RoutedQuest
     {
         var question = message.Messages.LatestUserText();
 
-        var tickets = SearchAsync(context, SupportTools.SearchTickets, question, cancellationToken);
-        var runbooks = SearchAsync(
-            context,
-            SupportTools.SearchRunbooks,
-            question,
-            cancellationToken
-        );
+        var tickets = SearchAsync(context, "search_tickets", question, cancellationToken);
+        var runbooks = SearchAsync(context, "search_runbooks", question, cancellationToken);
 
         var findings = new ChatMessage(
             ChatRole.User,

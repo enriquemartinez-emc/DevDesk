@@ -1,6 +1,5 @@
 using AGUI.Abstractions;
 using DevDesk.Server.Features.Chat.Agent;
-using DevDesk.ServiceDefaults;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
@@ -11,21 +10,21 @@ namespace DevDesk.Server.Features.Chat;
 
 public static class SupportChat
 {
+    private const string AgUiRoute = "/agui";
+
     // Must match ResourceNames.SupportAgent in the AppHost: DevUI lists agents by this name.
     private const string AgentName = "devdesk-support-agent";
-    private const string AgUiRoute = "/agui";
 
     public static WebApplicationBuilder AddSupportChat(
         this WebApplicationBuilder builder,
         McpConnection mcp
     )
     {
-        builder.AddOllamaApiClient(ServiceResources.ChatModel).AddChatClient();
+        builder.AddOllamaApiClient("chat-model").AddChatClient();
 
         builder.Services.AddAGUIServer();
 
-        // The hosting package drops the AG-UI SDK's omit-nulls rule, and the TypeScript client rejects
-        // null fields. The resolver only answers for AG-UI types, so the ticket API is unaffected.
+        // The hosting package drops the AG-UI SDK's omit-nulls rule and the TypeScript client rejects null fields; this resolver only affects AG-UI types.
         builder.Services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.TypeInfoResolverChain.Insert(
                 0,

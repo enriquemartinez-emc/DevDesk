@@ -4,11 +4,9 @@ namespace DevDesk.Server.Features.Tickets;
 
 public static class TicketsEndpoints
 {
-    private const string Tag = "Tickets";
-
     public static IEndpointRouteBuilder MapTicketsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup(ApiRoutes.Tickets).WithTags(Tag);
+        var group = app.MapGroup($"{ApiRoutes.Prefix}/tickets").WithTags("Tickets");
 
         group.MapCreateTicketEndpoint();
         group.MapGetTicketEndpoint();

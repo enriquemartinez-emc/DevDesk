@@ -12,7 +12,7 @@ namespace DevDesk.Mcp;
 public static class SearchRunbooksTool
 {
     [
-        McpServerTool(Name = ToolNames.SearchRunbooks),
+        McpServerTool(Name = "search_runbooks"),
         Description(
             "Search the runbook knowledge base for passages relevant to a query, using vector similarity over ingested runbook chunks."
         )

@@ -27,10 +27,7 @@ public static class SupportAgents
         chatClient.AsAIAgent(
             name: "lookup",
             instructions: LookupInstructions,
-            tools:
-            [
-                .. mcpTools.Where(tool => tool.Name == SupportTools.LookupTicket).Cast<AITool>(),
-            ]
+            tools: [.. mcpTools.Where(tool => tool.Name == "lookup_ticket").Cast<AITool>()]
         );
 
     public static AIAgent Conversation(IChatClient chatClient) =>
