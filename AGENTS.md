@@ -100,6 +100,11 @@ New backend features follow the same `Core.cs` (pure) + `Data.cs` (I/O) split as
 - Commit only when explicitly asked, and only after the user has approved the specific change.
 - Use [Conventional Commits](https://www.conventionalcommits.org/) for every commit message (`feat:`, `fix:`, `chore:`, `docs:`, etc.).
 
+## Working guidelines
+
+- **No browser end-to-end tests without approval.** Don't drive the app with `playwright-cli` (or any other browser automation) unless the user explicitly says to. Until then, make frontend changes and verify them with the type check, lint, and build only.
+- **Format C# after every change.** Whenever you change a `.cs` file or a related C# file, run `dotnet csharpier format .` from the repo root before finishing.
+
 ## When something isn't covered here
 
 Flag the gap and propose an approach rather than guessing silently — especially anything that would introduce a new container, a new orchestration mechanism, or a change to the `Core`/`Data` split described above.
