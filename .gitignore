@@ -480,3 +480,11 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Agent tooling: local runtime state, not source
+.playwright-cli/
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# esproj build output written with a literal backslash in the path (missed by the obj/ rule)
+frontend/obj\\Debug/
