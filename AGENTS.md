@@ -35,6 +35,7 @@ DevDesk.AppHost (orchestrator, config lives in DevDesk.AppHost.Core)
  ├─ DevDesk.Agent         Hosts the AIAgent (Microsoft Agent Framework)
  ├─ ├─ DevUI                          — agent conversation/tool-call
  ├─ DevDesk.Mcp           MCP server — groups LookupTicket + SearchRunbooks as tools
+ ├─ DevDesk.Ingestion     One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
  ├─ Postgres 18 (pgvector image)   — tickets + doc_chunks
  ├─ Azure Storage emulator (Azurite) — raw runbook docs before ingestion
  ├─ Ollama (community toolkit)     — local chat + embedding models
@@ -65,6 +66,7 @@ DevDesk/
 │           └── Data.cs           # Dapper queries + row-to-domain mapping (I/O lives here, not in Core)
 ├── DevDesk.Mcp/                  # MCP server — LookupTicket, SearchRunbooks tools
 ├── DevDesk.Agent/                # hosts the AIAgent, MCP client, chat model
+├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks
 ├── frontend/                  # React + Vite + shadcn/ui
 └── docs/                         # sample runbooks, ingested into pgvector via Azurite
 ```

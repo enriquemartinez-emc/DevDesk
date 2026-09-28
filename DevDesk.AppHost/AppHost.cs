@@ -79,6 +79,21 @@ var agent = builder
     .WithHttpHealthCheck(Topology.HealthCheckPath)
     .WithExternalHttpEndpoints();
 
+// DevDesk.Ingestion is a one-shot job: it uploads docs/*.md to blob storage, then chunks, embeds
+// and writes them to doc_chunks. It waits for mcp because DevDesk.Mcp creates the doc_chunks table.
+var ingestion = builder
+    .AddProject<Projects.DevDesk_Ingestion>(ResourceNames.Ingestion)
+    .WithReference(database)
+    .WithReference(runbooks)
+    .WithReference(embeddingModel)
+    .WaitFor(mcp)
+    .WaitFor(runbooks)
+    .WaitFor(embeddingModel)
+    .WithEnvironment(
+        Topology.DocsPathEnvironmentVariable,
+        Path.GetFullPath(Topology.DocsDirectory, builder.AppHostDirectory)
+    );
+
 var webfrontend = builder
     .AddViteApp(ResourceNames.WebFrontend, "../frontend")
     .WithReference(server)
