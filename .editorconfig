@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_size = 4
+max_line_length = 100
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Dead code fails the build's warning list instead of accumulating.
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning
+
+[*.{csproj,props,targets,json,yml,yaml}]
+indent_size = 2
+
+[*.sql]
+indent_size = 4

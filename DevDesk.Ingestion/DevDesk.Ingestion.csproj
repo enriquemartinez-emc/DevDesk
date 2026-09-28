@@ -1,17 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-DevDesk.Ingestion-81a267fd-3b08-4886-9632-bfcb0175a8fa</UserSecretsId>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Aspire.Azure.Storage.Blobs" Version="13.5.4" />
-    <PackageReference Include="Aspire.Npgsql" Version="13.5.4" />
-    <PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" Version="13.5.0" />
-    <PackageReference Include="Dapper" Version="2.1.89" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageReference Include="Aspire.Azure.Storage.Blobs" />
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="CommunityToolkit.Aspire.OllamaSharp" />
+    <PackageReference Include="Dapper" />
   </ItemGroup>
 
   <ItemGroup>

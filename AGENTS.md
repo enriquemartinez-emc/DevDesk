@@ -55,6 +55,9 @@ Every one of these is a native Aspire resource, added in `DevDesk.AppHost/AppHos
 
 ```
 DevDesk/
+├── Directory.Build.props         # shared project settings (net10.0, nullable, implicit usings, analyzers)
+├── Directory.Packages.props      # every NuGet version, centrally; project files carry no versions
+├── .editorconfig                 # formatting basics + dead-code analyzers (unused usings/members) as warnings
 ├── DevDesk.AppHost/              # orchestrator — AppHost.cs plus ResourceNames.cs, ContainerImages.cs,
 │                                  # ModelNames.cs, Topology.cs constants, no other logic
 ├── DevDesk.ServiceDefaults/      # shared OpenTelemetry, health checks, service discovery, resilience
