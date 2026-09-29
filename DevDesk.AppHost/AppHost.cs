@@ -82,7 +82,9 @@ var server = builder
 
 #pragma warning disable ASPIREMCP001
 var mcp = builder
-    .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp)
+    // http only: DevDesk.Server calls this over the network at startup, and the dev HTTPS
+    // certificate isn't reliably trusted for service-to-service calls under WSL2/containers.
+    .AddProject<Projects.DevDesk_Mcp>(ResourceNames.Mcp, launchProfileName: "http")
     .WithEnvironment(Topology.GrafanaOtlpEnvironmentVariable, grafanaOtlp)
     .WithReference(database)
     .WaitForCompletion(migrations)
