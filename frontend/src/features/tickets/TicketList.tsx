@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import {
   Item,
-  ItemActions,
   ItemContent,
   ItemDescription,
   ItemFooter,
   ItemGroup,
+  ItemHeader,
   ItemTitle,
 } from '@/components/ui/item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -93,17 +93,16 @@ export function TicketList({ onAsk }: TicketListProps) {
       <ItemGroup className="gap-3">
         {data.map((ticket) => (
           <Item key={ticket.id} variant="outline" size="sm">
-            <ItemContent>
-              <ItemTitle>
-                <span className="text-muted-foreground">#{ticket.number}</span> {ticket.subject}
-              </ItemTitle>
-              <ItemDescription>{ticket.description}</ItemDescription>
-            </ItemContent>
-            <ItemActions>
+            <ItemHeader>
+              <span className="text-sm text-muted-foreground">#{ticket.number}</span>
               <Badge className={ticketStatusBadgeClassName(ticket.status)}>
                 {ticketStatusLabel(ticket.status)}
               </Badge>
-            </ItemActions>
+            </ItemHeader>
+            <ItemContent>
+              <ItemTitle>{ticket.subject}</ItemTitle>
+              <ItemDescription>{ticket.description}</ItemDescription>
+            </ItemContent>
             <ItemFooter>
               <Button variant="ghost" size="sm" onClick={() => onAsk(ticket)}>
                 <MessageSquareText data-icon="inline-start" />
