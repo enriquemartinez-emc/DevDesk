@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuPortal,
@@ -123,21 +124,23 @@ export function AppSidebar() {
                 side="top"
                 align="end"
               >
-                <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <Avatar className="size-8 rounded-md">
-                      <AvatarFallback className="rounded-md">
-                        {initials(CURRENT_AGENT_NAME)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">{CURRENT_AGENT_NAME}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {CURRENT_AGENT_EMAIL}
-                      </span>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                      <Avatar className="size-8 rounded-md">
+                        <AvatarFallback className="rounded-md">
+                          {initials(CURRENT_AGENT_NAME)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-medium">{CURRENT_AGENT_NAME}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {CURRENT_AGENT_EMAIL}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </DropdownMenuLabel>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
