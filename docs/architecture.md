@@ -107,6 +107,16 @@ the only reason it touches `FunctionCallContent`/`FunctionResultContent` — to 
 was unreliable on this model: it would sometimes call only one tool, or none. Removing the choice
 removed the failure mode.
 
+**Why not MAF's built-in handoff/group-chat builders.** `Microsoft.Agents.AI.Workflows` ships
+`HandoffWorkflowBuilder` and `GroupChatWorkflowBuilder`, which look like a ready-made replacement
+for `SupportWorkflow`'s manual `WorkflowBuilder`/`AddEdge` wiring. Both route by letting an agent
+choose: `HandoffWorkflowBuilder` picks the next agent through a handoff tool call, and
+`GroupChatWorkflowBuilder` needs a `GroupChatManager.SelectNextAgentAsync` override to do anything
+other than round-robin. Either way, routing becomes another tool/model choice for `granite4:micro`
+to get right — the exact failure mode `research` above already hit and fixed by removing the
+choice. `classify`'s one constrained, single-word LLM call plus a regex is more reliable for this
+model, not a workaround for a missing framework feature.
+
 **Why `lookup` and `conversation` route through a `HandOffExecutor` instead of `classify` calling
 them directly.** `classify` derives from `ChatProtocolExecutor`, which only emits the message
 types it's configured to send; an `AIAgent` bound into the graph needs the chat protocol
