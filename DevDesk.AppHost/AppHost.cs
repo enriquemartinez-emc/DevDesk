@@ -109,8 +109,8 @@ var ingestion = builder
     .WaitFor(runbooks)
     .WaitFor(embeddingModel)
     .WithEnvironment(
-        Topology.DocsPathEnvironmentVariable,
-        Path.GetFullPath(Topology.DocsDirectory, builder.AppHostDirectory)
+        Topology.RunbooksPathEnvironmentVariable,
+        Path.GetFullPath(Topology.RunbooksDirectory, builder.AppHostDirectory)
     );
 
 var webfrontend = builder

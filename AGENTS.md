@@ -35,10 +35,10 @@ DevDesk.AppHost (orchestrator; names, images, models and ports are constants bes
  ├─ DevDesk.Server     Minimal API — ticket CRUD; also hosts the support agent (Agent Framework workflow): AG-UI at /agui + OpenAI Responses endpoints
  ├─ DevDesk.Mcp        MCP server — groups LookupTicket + SearchRunbooks + SearchTickets as tools
  ├─ DevDesk.Migrations One-shot job — applies the numbered SQL scripts (tickets, doc_chunks) with DbUp
- ├─ DevDesk.Ingestion  One-shot job — docs/ → Azurite blobs → chunk → embed → doc_chunks
+ ├─ DevDesk.Ingestion  One-shot job — runbooks/ → Azurite blobs → chunk → embed → doc_chunks
  ├─ DevUI              In-process aggregator (no container) — agent conversation/tool-call debugging
  ├─ Postgres 18 (pgvector image)     — tickets + doc_chunks
- ├─ Azure Storage emulator (Azurite) — raw runbook docs before ingestion
+ ├─ Azure Storage emulator (Azurite) — raw runbook files before ingestion
  ├─ Ollama (community toolkit)       — local chat + embedding models
  └─ grafana-lgtm container           — Collector + Prometheus + Loki + Tempo + Grafana, one image
 ```
@@ -76,15 +76,16 @@ DevDesk/
 │       │                         # and a file-scoped Db*Row DTO; plus TicketsEndpoints.cs (route group)
 │       └── Chat/                 # hosting: SupportChat (AG-UI + DevUI endpoints), McpConnection, StableMessageIdChatClient
 │           └── Agent/            # what the agent is: SupportWorkflow (the graph), SupportAgents (the LLM agents and their
-│                                 # instructions), the executors, SupportTools (MCP tool names), Question (routing types)
+│                                 # instructions), the executors, Question (routing types) — see docs/architecture.md
 ├── DevDesk.Mcp/                  # MCP server, flat (no Features/ folders): one file per tool, TicketRow.cs,
 │                                  # tools query Postgres directly with Dapper
 ├── DevDesk.Migrations/           # one-shot job: DbUp applies Scripts/NNNN_*.sql (embedded resources), in name order
-├── DevDesk.Ingestion/            # one-shot job: uploads docs/ to Azurite, chunks, embeds, writes doc_chunks (IngestionOptions)
+├── DevDesk.Ingestion/            # one-shot job: uploads runbooks/ to Azurite, chunks, embeds, writes doc_chunks (IngestionOptions)
 ├── frontend/                     # React + Vite + shadcn/ui
 │   ├── openapi/                  # committed OpenAPI document the API client is generated from
 │   └── src/{api,features,components,lib}   # api/ is generated; features/ hold hooks + components
-└── docs/                         # sample runbooks, ingested into pgvector via Azurite
+├── runbooks/                     # sample runbooks, ingested into pgvector via Azurite
+└── docs/                         # application documentation (architecture); not ingested
 ```
 
 `Core.cs` holds domain rules only; parsing or shaping request input for a query is shell work, not Core. Transitions take the exact source state (`Resolve(InProgressTicket)`), so an illegal call doesn't compile; the handler narrows the loaded row (`is InProgressTicket`) and answers 409 otherwise. Don't add a runtime state guard inside Core.

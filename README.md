@@ -52,7 +52,7 @@ curl -X POST http://localhost:5480/api/tickets \
 ```
 
 Then, in the chat UI, click **Ask about this ticket** on it and send. Also try *"How do we reset a customer's 2FA?"* —
-the agent should search the runbooks in `docs/`.
+the agent should search the runbooks in `runbooks/`.
 
 Answers come from a small local model on CPU, so they can take a while; you'll see a "Thinking…" state and the tool
 calls the agent makes.
@@ -75,4 +75,6 @@ npm run fetch:openapi              # needs SERVER_URL=http://localhost:5480
 npm run generate:api               # regenerate the typed client from openapi/devdesk-server.json
 ```
 
-Add runbooks by dropping Markdown files into `docs/` and restarting; the ingestion job re-embeds them on every start.
+Add runbooks by dropping Markdown files into `runbooks/` and restarting; the ingestion job re-embeds them on every start.
+
+Architecture docs, including how the agent workflow is structured, live in [docs/](docs/).

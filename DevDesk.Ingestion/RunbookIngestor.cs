@@ -54,7 +54,7 @@ public sealed class RunbookIngestor(
 
     private async Task UploadRunbooksAsync(BlobContainerClient container, CancellationToken ct)
     {
-        foreach (var path in Directory.EnumerateFiles(settings.DocsPath, RunbookFilePattern))
+        foreach (var path in Directory.EnumerateFiles(settings.RunbooksPath, RunbookFilePattern))
         {
             var blobName = Path.GetFileName(path);
             await container.GetBlobClient(blobName).UploadAsync(path, overwrite: true, ct);

@@ -7,7 +7,7 @@ public sealed class IngestionOptions
     public const string SectionName = "Ingestion";
 
     [Required]
-    public string DocsPath { get; init; } = string.Empty;
+    public string RunbooksPath { get; init; } = string.Empty;
 
     [Required]
     public string BlobContainer { get; init; } = string.Empty;
