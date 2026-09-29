@@ -8,6 +8,10 @@ A support-ticket assistant. Support agents ask it things like:
 
 Everything runs locally: the chat model and embeddings are served by Ollama, and one command starts the whole stack.
 
+![Ticket list and chat, before asking a question](docs/screenshots/overview.png)
+
+![The agent answering a research question, citing the ticket and runbook it drew from](docs/screenshots/chat.png)
+
 ## Prerequisites
 
 - .NET 10 SDK
