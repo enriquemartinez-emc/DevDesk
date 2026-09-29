@@ -1,10 +1,5 @@
 # Architecture
 
-This is a design reference, not a contributor guide — conventions, gotchas and folder layout
-rules live in [AGENTS.md](../AGENTS.md). This document explains *why* the system is shaped the
-way it is, with most of its depth on the Agent, since that's where the interesting design
-decisions are.
-
 ## System overview
 
 ```
@@ -146,24 +141,6 @@ that happen to agree.
 
 ## Extending it
 
-- **A new tool**: add it to `DevDesk.Mcp` (flat, one file per tool); reference it by its literal
-  name from whichever agent or executor needs it, the same way the three existing tools are
-  referenced. No change to `SupportWorkflow` unless the new tool needs a new routing branch.
 - **A new routing branch**: add a `QuestionKind`, teach `classify` to produce it, and add an edge
   in `SupportWorkflow.Build` — either straight to a new `AIAgent` from `SupportAgents`, or through
   a new `Executor` if the step needs code, not just a model call.
-- **Using the agent outside chat** (e.g. triggering it from ticket creation): nothing under
-  `Agent/` depends on `Features/Chat`'s hosting code, so `SupportWorkflow.Build` and
-  `SupportAgents` are already callable from another feature. This hasn't been needed yet — do it
-  when a concrete feature asks for it, not ahead of time.
-
-## Design review (2026-09-28)
-
-Reviewed the current `Features/Chat` structure while writing this document, specifically for
-whether it's the most organized shape for adding more AI features later. Conclusion: no
-restructuring — the hosting/`Agent` split, the executor/agent distinction, and the lack of shared
-constants for cross-process tool names are all deliberate and still hold up. The one thing worth
-flagging (not changing) is the "using it outside chat" note above: today everything is reachable
-only through `Features/Chat`, which is correct for what exists now, but the natural seam if a
-second feature needs it is to promote `Agent/` to a sibling of `Chat/` rather than reach across
-feature folders.
