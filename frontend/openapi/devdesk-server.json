@@ -365,6 +365,7 @@
       "TicketResponse": {
         "required": [
           "id",
+          "number",
           "subject",
           "description",
           "requesterId",
@@ -381,6 +382,14 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "number": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
           },
           "subject": {
             "type": "string"

@@ -5,6 +5,7 @@ namespace DevDesk.Server.Features.Tickets;
 
 public sealed record TicketResponse(
     Guid Id,
+    long Number,
     string Subject,
     string Description,
     Guid RequesterId,
@@ -19,11 +20,12 @@ public sealed record TicketResponse(
 
 public static class TicketResponses
 {
-    public static TicketResponse FromDomain(Ticket ticket) =>
+    public static TicketResponse FromDomain(Ticket ticket, long number) =>
         ticket switch
         {
             OpenTicket t => new TicketResponse(
                 t.Id.Value,
+                number,
                 t.Subject,
                 t.Description,
                 t.Requester.Value,
@@ -37,6 +39,7 @@ public static class TicketResponses
             ),
             InProgressTicket t => new TicketResponse(
                 t.Id.Value,
+                number,
                 t.Subject,
                 t.Description,
                 t.Requester.Value,
@@ -50,6 +53,7 @@ public static class TicketResponses
             ),
             ResolvedTicket t => new TicketResponse(
                 t.Id.Value,
+                number,
                 t.Subject,
                 t.Description,
                 t.Requester.Value,
@@ -63,6 +67,7 @@ public static class TicketResponses
             ),
             ClosedTicket t => new TicketResponse(
                 t.Id.Value,
+                number,
                 t.Subject,
                 t.Description,
                 t.Requester.Value,

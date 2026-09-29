@@ -22,6 +22,7 @@ public static class CloseTicketEndpoint
         const string selectSql = """
             select
                 id as Id,
+                ticket_number as Number,
                 subject as Subject,
                 description as Description,
                 requester_id as RequesterId,
@@ -81,7 +82,7 @@ public static class CloseTicketEndpoint
             )
         );
 
-        return TypedResults.Ok(TicketResponses.FromDomain(closed));
+        return TypedResults.Ok(TicketResponses.FromDomain(closed, row.Number));
     }
 }
 
@@ -89,6 +90,7 @@ public static class CloseTicketEndpoint
 file sealed record DbTicketRow
 {
     public Guid Id { get; init; }
+    public long Number { get; init; }
     public string Subject { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public Guid RequesterId { get; init; }

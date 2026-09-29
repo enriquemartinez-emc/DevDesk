@@ -14,11 +14,11 @@ public sealed partial class ClassifyQuestionExecutor(IChatClient chatClient)
         before or what fixed it, whatever the subject: always research such questions, even if the
         problem sounds unlikely.
         Reply "conversation" for anything else: greetings, thanks, questions about one specific
-        ticket by its id, or follow-ups about what was just said.
+        ticket by its number, or follow-ups about what was just said.
         """;
 
-    [GeneratedRegex(@"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")]
-    private static partial Regex TicketId();
+    [GeneratedRegex(@"#\d+")]
+    private static partial Regex TicketNumber();
 
     protected override ProtocolBuilder ConfigureProtocol(ProtocolBuilder protocolBuilder) =>
         base.ConfigureProtocol(protocolBuilder).SendsMessage<RoutedQuestion>();
@@ -44,7 +44,9 @@ public sealed partial class ClassifyQuestionExecutor(IChatClient chatClient)
             return QuestionKind.Research;
         }
 
-        return TicketId().IsMatch(question) ? QuestionKind.TicketLookup : QuestionKind.Conversation;
+        return TicketNumber().IsMatch(question)
+            ? QuestionKind.TicketLookup
+            : QuestionKind.Conversation;
     }
 
     private async Task<bool> IsResearchAsync(string question, CancellationToken cancellationToken)

@@ -37,6 +37,7 @@ public static class ResolveTicketEndpoint
         const string selectSql = """
             select
                 id as Id,
+                ticket_number as Number,
                 subject as Subject,
                 description as Description,
                 requester_id as RequesterId,
@@ -98,7 +99,7 @@ public static class ResolveTicketEndpoint
             )
         );
 
-        return TypedResults.Ok(TicketResponses.FromDomain(resolved));
+        return TypedResults.Ok(TicketResponses.FromDomain(resolved, row.Number));
     }
 }
 
@@ -106,6 +107,7 @@ public static class ResolveTicketEndpoint
 file sealed record DbTicketRow
 {
     public Guid Id { get; init; }
+    public long Number { get; init; }
     public string Subject { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public Guid RequesterId { get; init; }

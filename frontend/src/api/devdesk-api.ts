@@ -42,6 +42,11 @@ export interface ResolveTicketRequest {
 export interface TicketResponse {
   /** @format uuid */
   id: string;
+  /**
+   * @format int64
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  number: number | string;
   subject: string;
   description: string;
   /** @format uuid */

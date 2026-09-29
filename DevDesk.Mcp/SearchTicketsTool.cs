@@ -67,7 +67,7 @@ public static class SearchTicketsTool
         return string.Join(
             "\n",
             tickets.Select(ticket =>
-                $"- Ticket {ticket.Id} ('{ticket.Subject}', {ticket.Status}): {ticket.Description}"
+                $"- Ticket #{ticket.Number} ('{ticket.Subject}', {ticket.Status}): {ticket.Description}"
                 + (
                     ticket.ResolutionNote is null
                         ? " No resolution recorded yet."

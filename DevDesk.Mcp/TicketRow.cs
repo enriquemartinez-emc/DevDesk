@@ -5,6 +5,7 @@ internal sealed record TicketRow
 {
     public const string Columns = """
         id as Id,
+        ticket_number as Number,
         subject as Subject,
         description as Description,
         created_at as CreatedAt,
@@ -17,6 +18,7 @@ internal sealed record TicketRow
         """;
 
     public Guid Id { get; init; }
+    public long Number { get; init; }
     public string Subject { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }

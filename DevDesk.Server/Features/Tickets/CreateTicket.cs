@@ -58,9 +58,10 @@ public static class CreateTicketEndpoint
                 @CreatedAt,
                 @Status
             )
+            returning ticket_number
             """;
 
-        await connection.ExecuteAsync(
+        var number = await connection.QuerySingleAsync<long>(
             new CommandDefinition(
                 insertSql,
                 new
@@ -76,7 +77,7 @@ public static class CreateTicketEndpoint
             )
         );
 
-        var response = TicketResponses.FromDomain(ticket);
+        var response = TicketResponses.FromDomain(ticket, number);
         return TypedResults.CreatedAtRoute(response, "GetTicket", new { id = response.Id });
     }
 }

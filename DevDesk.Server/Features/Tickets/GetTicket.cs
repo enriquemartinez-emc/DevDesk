@@ -20,6 +20,7 @@ public static class GetTicketEndpoint
         const string selectSql = """
             select
                 id as Id,
+                ticket_number as Number,
                 subject as Subject,
                 description as Description,
                 requester_id as RequesterId,
@@ -46,6 +47,7 @@ public static class GetTicketEndpoint
 file sealed record DbTicketRow
 {
     public Guid Id { get; init; }
+    public long Number { get; init; }
     public string Subject { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
     public Guid RequesterId { get; init; }
@@ -60,6 +62,7 @@ file sealed record DbTicketRow
     public TicketResponse ToResponse() =>
         new(
             Id,
+            Number,
             Subject,
             Description,
             RequesterId,

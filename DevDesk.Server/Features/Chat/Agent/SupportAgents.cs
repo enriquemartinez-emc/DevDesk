@@ -8,7 +8,7 @@ public static class SupportAgents
 {
     private const string LookupInstructions = """
         You are a support-desk assistant for DevDesk. Use lookup_ticket to answer the question about
-        the ticket whose id the support agent gave.
+        the ticket whose number (e.g. #1042) the support agent gave.
         """;
 
     private const string ConversationInstructions = """

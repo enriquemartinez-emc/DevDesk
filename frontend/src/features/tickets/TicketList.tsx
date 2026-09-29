@@ -94,7 +94,9 @@ export function TicketList({ onAsk }: TicketListProps) {
         {data.map((ticket) => (
           <Item key={ticket.id} variant="outline" size="sm">
             <ItemContent>
-              <ItemTitle>{ticket.subject}</ItemTitle>
+              <ItemTitle>
+                <span className="text-muted-foreground">#{ticket.number}</span> {ticket.subject}
+              </ItemTitle>
               <ItemDescription>{ticket.description}</ItemDescription>
             </ItemContent>
             <ItemActions>
