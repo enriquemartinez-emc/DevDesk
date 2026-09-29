@@ -17,7 +17,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResolveTicketDialog } from './ResolveTicketDialog';
 import { type TicketAction, availableActions, ticketActionLabels } from './ticketActions';
-import { ticketStatusLabel } from './ticketStatus';
+import { ticketStatusBadgeClassName, ticketStatusLabel } from './ticketStatus';
 import { useTicketActions } from './useTicketActions';
 import { useTickets } from './useTickets';
 
@@ -100,7 +100,9 @@ export function TicketList({ onAsk }: TicketListProps) {
               <ItemDescription>{ticket.description}</ItemDescription>
             </ItemContent>
             <ItemActions>
-              <Badge variant="secondary">{ticketStatusLabel(ticket.status)}</Badge>
+              <Badge className={ticketStatusBadgeClassName(ticket.status)}>
+                {ticketStatusLabel(ticket.status)}
+              </Badge>
             </ItemActions>
             <ItemFooter>
               <Button variant="ghost" size="sm" onClick={() => onAsk(ticket)}>
