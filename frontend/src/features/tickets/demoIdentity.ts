@@ -1,3 +1,5 @@
 export const DEMO_REQUESTER_ID = '11111111-1111-1111-1111-111111111111';
 
 export const CURRENT_AGENT_ID = '22222222-2222-2222-2222-222222222222';
+export const CURRENT_AGENT_NAME = 'James Bond';
+export const CURRENT_AGENT_EMAIL = 'james.bond@devdesk.example';
